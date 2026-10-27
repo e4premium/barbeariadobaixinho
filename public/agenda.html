@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BARBEARIA DO BAIXINHO - Agendamento Online</title>
+<style>
+:root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(29,78,158,.18),transparent),var(--bg);color:var(--ink);font:15px/1.5 "Avenir Next","Segoe UI",Helvetica,Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.box{max-width:480px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:24px;box-shadow:1px 1px 0 var(--edge),2px 2px 0 var(--edge),3px 3px 0 var(--edge),4px 4px 0 var(--edge),5px 5px 0 var(--edge),0 22px 30px -12px rgba(8,16,40,.4)}
+h1{font-size:20px;margin:0 0 4px;text-align:center;line-height:1.2}
+p.sub{text-align:center;color:var(--mut);margin:0 0 20px;font-size:13px}
+.row{display:flex;flex-direction:column;gap:14px;margin-bottom:16px}
+label{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:14px}
+input,select{font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);box-shadow:inset 0 2px 4px rgba(0,0,0,.2);color-scheme:dark;}
+button{font:inherit;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);cursor:pointer;font-weight:600;box-shadow:0 4px 0 var(--edge);transition:transform .08s,box-shadow .08s}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+button.pri{background:var(--ink);color:var(--card);border-color:var(--ink);box-shadow:0 4px 0 var(--pe)}
+button.pri:active{transform:translateY(3px);box-shadow:0 1px 0 var(--pe)}
+
+/* Estilo para os botões de horários */
+.time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.time-btn{padding:8px 4px;font-size:13px;text-align:center;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink);cursor:pointer;box-shadow:0 2px 0 var(--edge)}
+.time-btn:hover{background:#233252}
+.time-btn.selected{background:var(--ink);color:var(--card);border-color:var(--ink);box-shadow:0 2px 0 var(--pe);font-weight:600}
+
+#msg{text-align:center;margin-top:14px;font-weight:600}
+.aviso{text-align:center;padding:10px 0 4px}
+.aviso h2{font-size:17px;margin:0 0 8px;color:var(--red)}
+.aviso p{margin:0;color:var(--mut)}
+[hidden]{display:none!important}
+.ok{color:var(--ok)}
+.err{color:var(--red)}
+.pole{position:relative;overflow:hidden;width:30px;height:90px;border:solid #cdd3df;border-width:7px 0;border-radius:10px;box-shadow:0 8px 0 #0b1429,0 14px 14px rgba(0,0,0,.45);margin:0 auto 10px}
+.pole::before{content:"";position:absolute;inset:-60px 0;background:repeating-linear-gradient(-45deg,#c8102e 0 10px,#fff 10px 20px,#1d4e9e 20px 30px);animation:spin 2.4s linear infinite}
+.pole::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.45),rgba(255,255,255,.55) 30%,rgba(255,255,255,0) 55%,rgba(0,0,0,.5))}
+@keyframes spin{to{transform:translateY(40.91px)}}
+</style>
+
+<!-- Firebase App & Firestore Compat -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0fZrksbEj3WIDmNHXRdE9o8pbTWnySwM",
+    authDomain: "barbearia-d51ac.firebaseapp.com",
+    projectId: "barbearia-d51ac",
+    storageBucket: "barbearia-d51ac.firebasestorage.app",
+    messagingSenderId: "358041934550",
+    appId: "1:358041934550:web:d3844c2ee7a05c1f488777",
+    measurementId: "G-7CSZEYTFVL"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+</head>
+<body>
+
+<div class="box">
+  <div class="pole"></div>
+  <h1>BARBEARIA DO BAIXINHO</h1>
+  <p class="sub">Faça o seu agendamento online</p>
+
+  <div id="aviso" class="aviso" hidden>
+    <h2>Agendamento indisponível no momento</h2>
+    <p>Fale diretamente com a barbearia para marcar o seu horário.</p>
+  </div>
+
+  <div id="formArea" hidden>
+  <div class="row">
+    <label>Seu Nome <input id="cliName" type="text" placeholder="Nome completo"></label>
+    <label>Seu WhatsApp <input id="cliPhone" type="tel" placeholder="(96) 99999-9999" maxlength="15" oninput="mascaraTelefone(this)"></label>
+    <label>Data <input id="cliDate" type="date" onchange="gerarHorarios()"></label>
+    
+    <label>Escolha o Horário:
+      <div class="time-grid" id="timeGrid">
+        <!-- Os botões de horário aparecem aqui automaticamente -->
+      </div>
+    </label>
+
+    <label>Barbeiro 
+      <select id="cliBarber"><option value="">A carregar barbeiros...</option></select>
+    </label>
+    <label>Serviço 
+      <select id="cliService"><option value="">A carregar serviços...</option></select>
+    </label>
+    <button class="pri" onclick="realizarAgendamento()">Confirmar Agendamento</button>
+  </div>
+  <div id="msg"></div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+let S=null;
+let horarioSelecionado = "";
+
+// Data de hoje (AAAA-MM-DD) no fuso do aparelho
+function hojeISO(){
+  return new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+}
+
+// Lê o vencimento em sistema/assinatura. Sem documento, sem campo ou vencido = bloqueado.
+async function assinaturaEmDia(){
+  try {
+    const snap = await db.collection("sistema").doc("assinatura").get();
+    const venc = snap.exists ? snap.data().vencimento : null;
+    if(typeof venc !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(venc)) return false;
+    return hojeISO() <= venc;
+  } catch(e){
+    console.error("Erro ao verificar assinatura:", e);
+    return false;
+  }
+}
+
+async function iniciar(){
+  const ok = await assinaturaEmDia();
+  if(!ok){
+    $('#aviso').hidden = false;
+    $('#formArea').hidden = true;
+    return;
+  }
+  $('#formArea').hidden = false;
+  carregarDadosPublicos();
+}
+
+// Gerar grelha de horários dinãmica de acordo com o dia da semana selecionado
+function gerarHorarios() {
+  const dataInput = $('#cliDate').value;
+  const grid = $('#timeGrid');
+  let horarios = [];
+
+  if (dataInput) {
+    // Correção de fuso horário para ler o dia correto da semana
+    const [ano, mes, dia] = dataInput.split('-');
+    const dataObj = new Date(ano, mes - 1, dia);
+    const diaSemana = dataObj.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+
+    if (diaSemana === 0) {
+      // Domingo: 10:00 as 13:30
+      horarios = ["10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30"];
+    } else if (diaSemana === 6) {
+      // Sábado: 09:00 as 13:30 e 15:00 as 20:30
+      horarios = [
+        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
+      ];
+    } else {
+      // Segunda a Sexta: 09:00 as 12:00 e 15:00 as 19:30
+      horarios = [
+        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00",
+        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"
+      ];
+    }
+  }
+
+  // Se o horário selecionado atualmente não estiver na lista do novo dia, limpa a seleção
+  if (!horarios.includes(horarioSelecionado)) {
+    horarioSelecionado = horarios.length > 0 ? horarios[0] : "";
+  }
+
+  let html = '';
+  if (horarios.length === 0) {
+    grid.innerHTML = '<span class="mut" style="grid-column: span 4; text-align:center;">Selecione uma data válida</span>';
+    return;
+  }
+
+  horarios.forEach(h => {
+    const sel = h === horarioSelecionado ? 'selected' : '';
+    html += `<div class="time-btn ${sel}" onclick="selecionarHorario('${h}')">${h}</div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function selecionarHorario(h) {
+  horarioSelecionado = h;
+  gerarHorarios();
+}
+
+function mascaraTelefone(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 6) {
+    v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+  } else if (v.length > 2) {
+    v = v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+  } else if (v.length > 0) {
+    v = v.replace(/^(\d*)/, '($1');
+  }
+  input.value = v;
+}
+
+async function carregarDadosPublicos(){
+  try {
+    const docRef = db.collection("sistema").doc("dados_barbearia");
+    const docSnap = await docRef.get();
+    if(docSnap.exists){
+      S = docSnap.data();
+      $('#cliBarber').innerHTML = S.barbers.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      $('#cliService').innerHTML = S.services.map(s=>`<option value="${s.id}" data-price="${s.price}">${s.name} – R$ ${Number(s.price).toFixed(2)}</option>`).join('');
+    }
+  } catch(e){
+    console.error("Erro ao carregar dados:", e);
+  }
+}
+
+async function realizarAgendamento(){
+  const nome = $('#cliName').value.trim();
+  const fone = $('#cliPhone').value.trim();
+  const data = $('#cliDate').value;
+  const hora = horarioSelecionado;
+  const barberId = $('#cliBarber').value;
+  const servId = $('#cliService').value;
+  const msg = $('#msg');
+
+  if(!nome || !data || !hora || !barberId || !servId){
+    msg.className = 'err';
+    msg.textContent = 'Por favor, preencha todos os campos e selecione um horário.';
+    return;
+  }
+
+  try {
+    msg.className = '';
+    msg.textContent = 'A processar agendamento...';
+
+    if(!(await assinaturaEmDia())){
+      $('#formArea').hidden = true;
+      $('#aviso').hidden = false;
+      return;
+    }
+
+    const docRef = db.collection("sistema").doc("dados_barbearia");
+    const docSnap = await docRef.get();
+    if(docSnap.exists) S = docSnap.data();
+    if(!S.appts) S.appts = [];
+    if(!S.clients) S.clients = [];
+
+    const ocupado = S.appts.some(a => a.date === data && a.time === hora && a.bid === barberId && a.status === 'agendado');
+    if(ocupado){
+      msg.className = 'err';
+      msg.textContent = `O horário ${hora} já está ocupado para este barbeiro. Escolha outro.`;
+      return;
+    }
+
+    const b = S.barbers.find(x => x.id === barberId);
+    const s = S.services.find(x => x.id === servId);
+
+    let k = S.clients.find(x => x.name.toLowerCase() === nome.toLowerCase());
+    if(!k){
+      k = { id: uid(), name: nome, phone: fone };
+      S.clients.push(k);
+    } else if(!k.phone && fone) {
+      k.phone = fone;
+    }
+
+    S.appts.push({
+      id: uid(),
+      date: data,
+      time: hora,
+      client: k.name,
+      cid: k.id,
+      bid: b.id,
+      bn: b.name,
+      sn: s.name,
+      price: s.price,
+      status: 'agendado'
+    });
+
+    await docRef.set(S);
+
+    msg.className = 'ok';
+    msg.textContent = 'Agendamento realizado com sucesso! Até breve.';
+    
+    $('#cliName').value = '';
+    $('#cliPhone').value = '';
+    
+  } catch(e) {
+    console.error(e);
+    msg.className = 'err';
+    msg.textContent = 'Erro ao realizar agendamento. Tente novamente.';
+  }
+}
+
+document.getElementById('cliDate').value = new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+gerarHorarios();
+iniciar();
+</script>
+</body>
+</html>
