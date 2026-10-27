@@ -1,8 +1,7 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BARBEARIA DO BAIXINHO - Agendamento Online</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💈</text></svg>">
+<title>Agendamento Online</title>
 <style>
 :root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}
 *{box-sizing:border-box}
@@ -37,30 +36,13 @@ button.pri:active{transform:translateY(3px);box-shadow:0 1px 0 var(--pe)}
 @keyframes spin{to{transform:translateY(40.91px)}}
 </style>
 
-<!-- Firebase App & Firestore Compat -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyA0fZrksbEj3WIDmNHXRdE9o8pbTWnySwM",
-    authDomain: "barbearia-d51ac.firebaseapp.com",
-    projectId: "barbearia-d51ac",
-    storageBucket: "barbearia-d51ac.firebasestorage.app",
-    messagingSenderId: "358041934550",
-    appId: "1:358041934550:web:d3844c2ee7a05c1f488777",
-    measurementId: "G-7CSZEYTFVL"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
 </head>
 <body>
 
 <div class="box">
-  <div class="pole"></div>
-  <h1>BARBEARIA DO BAIXINHO</h1>
+  <img id="blogo" alt="" hidden style="display:block;margin:0 auto 10px;max-width:150px;max-height:100px;object-fit:contain">
+  <div class="pole" id="bpole"></div>
+  <h1 id="bnome">&nbsp;</h1>
   <p class="sub">Faça o seu agendamento online</p>
 
   <div id="aviso" class="aviso" hidden>
@@ -98,33 +80,32 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 let S=null;
 let horarioSelecionado = "";
 
-// Data de hoje (AAAA-MM-DD) no fuso do aparelho
-function hojeISO(){
-  return new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
-}
+// Qual barbearia? Vem do link: agenda.html?b=nome-da-barbearia
+const SLUG = (new URLSearchParams(location.search).get('b') || '').toLowerCase();
+const API = '/.netlify/functions/';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// Lê o vencimento em sistema/assinatura. Sem documento, sem campo ou vencido = bloqueado.
-async function assinaturaEmDia(){
-  try {
-    const snap = await db.collection("sistema").doc("assinatura").get();
-    const venc = snap.exists ? snap.data().vencimento : null;
-    if(typeof venc !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(venc)) return false;
-    return hojeISO() <= venc;
-  } catch(e){
-    console.error("Erro ao verificar assinatura:", e);
-    return false;
-  }
-}
+function indisponivel(){ $('#aviso').hidden = false; $('#formArea').hidden = true; }
 
 async function iniciar(){
-  const ok = await assinaturaEmDia();
-  if(!ok){
-    $('#aviso').hidden = false;
-    $('#formArea').hidden = true;
-    return;
+  if(!/^[a-z0-9-]{2,60}$/.test(SLUG)) return indisponivel();
+  try {
+    const r = await fetch(API + 'agenda-publica?b=' + encodeURIComponent(SLUG));
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok || !d.ok) return indisponivel();
+    S = d;
+    $('#bnome').textContent = d.nome;
+    document.title = d.nome + ' - Agendamento Online';
+    if(typeof d.logo === 'string' && /^(https:\/\/|data:image\/)/.test(d.logo)){
+      $('#blogo').src = d.logo; $('#blogo').hidden = false; $('#bpole').style.display = 'none';
+    }
+    $('#cliBarber').innerHTML = d.barbers.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+    $('#cliService').innerHTML = d.services.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} – R$ ${Number(x.price).toFixed(2)}</option>`).join('');
+    $('#formArea').hidden = false;
+  } catch(e){
+    console.error(e);
+    indisponivel();
   }
-  $('#formArea').hidden = false;
-  carregarDadosPublicos();
 }
 
 // Gerar grelha de horários dinãmica de acordo com o dia da semana selecionado
@@ -193,20 +174,6 @@ function mascaraTelefone(input) {
   input.value = v;
 }
 
-async function carregarDadosPublicos(){
-  try {
-    const docRef = db.collection("sistema").doc("dados_barbearia");
-    const docSnap = await docRef.get();
-    if(docSnap.exists){
-      S = docSnap.data();
-      $('#cliBarber').innerHTML = S.barbers.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-      $('#cliService').innerHTML = S.services.map(s=>`<option value="${s.id}" data-price="${s.price}">${s.name} – R$ ${Number(s.price).toFixed(2)}</option>`).join('');
-    }
-  } catch(e){
-    console.error("Erro ao carregar dados:", e);
-  }
-}
-
 async function realizarAgendamento(){
   const nome = $('#cliName').value.trim();
   const fone = $('#cliPhone').value.trim();
@@ -226,50 +193,18 @@ async function realizarAgendamento(){
     msg.className = '';
     msg.textContent = 'A processar agendamento...';
 
-    if(!(await assinaturaEmDia())){
-      $('#formArea').hidden = true;
-      $('#aviso').hidden = false;
-      return;
-    }
-
-    const docRef = db.collection("sistema").doc("dados_barbearia");
-    const docSnap = await docRef.get();
-    if(docSnap.exists) S = docSnap.data();
-    if(!S.appts) S.appts = [];
-    if(!S.clients) S.clients = [];
-
-    const ocupado = S.appts.some(a => a.date === data && a.time === hora && a.bid === barberId && a.status === 'agendado');
-    if(ocupado){
-      msg.className = 'err';
-      msg.textContent = `O horário ${hora} já está ocupado para este barbeiro. Escolha outro.`;
-      return;
-    }
-
-    const b = S.barbers.find(x => x.id === barberId);
-    const s = S.services.find(x => x.id === servId);
-
-    let k = S.clients.find(x => x.name.toLowerCase() === nome.toLowerCase());
-    if(!k){
-      k = { id: uid(), name: nome, phone: fone };
-      S.clients.push(k);
-    } else if(!k.phone && fone) {
-      k.phone = fone;
-    }
-
-    S.appts.push({
-      id: uid(),
-      date: data,
-      time: hora,
-      client: k.name,
-      cid: k.id,
-      bid: b.id,
-      bn: b.name,
-      sn: s.name,
-      price: s.price,
-      status: 'agendado'
+    const r = await fetch(API + 'agendar', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({b: SLUG, nome, fone, data, hora, barberId, servId})
     });
-
-    await docRef.set(S);
+    const d = await r.json().catch(() => ({}));
+    if(!r.ok){
+      if(d.indisponivel){ indisponivel(); return; }
+      msg.className = 'err';
+      msg.textContent = d.error || 'Erro ao realizar agendamento. Tente novamente.';
+      return;
+    }
 
     msg.className = 'ok';
     msg.textContent = 'Agendamento realizado com sucesso! Até breve.';
