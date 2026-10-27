@@ -1,0 +1,17 @@
+DEPLOY (Netlify)
+1) Suba esta pasta inteira (GitHub -> Netlify, ou arraste a pasta no Netlify).
+2) Site configuration > Environment variables:
+   FIREBASE_SERVICE_ACCOUNT_B64  = JSON da chave de servico em base64
+                                   (deixe so project_id, client_email, private_key; limite ~4KB no total)
+   INFINITEPAY_HANDLE            = seu handle da InfinitePay
+   VALOR_CENTAVOS                = 500
+   APP_URL                       = (opcional) pagina para onde o cliente volta apos pagar
+   ALLOWED_ORIGIN                = (se o index.html estiver FORA do Netlify) ex: https://seuusuario.github.io
+3) No Firestore, publique o firestore.rules.
+4) No console do Firestore crie sistema/assinatura com vencimento (texto) = AAAA-MM-DD.
+5) Em public/index.html troque API_MENSALIDADE pela URL do seu site Netlify.
+   Se o index.html tambem for hospedado no Netlify, pode usar: "/.netlify/functions/criar-cobranca"
+6) Teste com um pagamento real e veja os logs da funcao webhook-infinitepay.
+
+Gerar o base64 da chave:  base64 -w0 chave.json   (Linux/Mac)
+                          [Convert]::ToBase64String([IO.File]::ReadAllBytes("chave.json"))   (PowerShell)
