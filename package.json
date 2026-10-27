@@ -1,0 +1,9 @@
+{
+  "name": "mensalidade-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Libera o painel automaticamente após o pagamento da mensalidade (InfinitePay + Firestore)",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

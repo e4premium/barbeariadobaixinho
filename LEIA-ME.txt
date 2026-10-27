@@ -1,0 +1,46 @@
+SISTEMA MULTI-BARBEARIAS (Netlify + Firebase)
+
+ESTRUTURA
+  public/index.html                       -> o sistema do dono (um só para todas as barbearias)
+  public/agenda.html                      -> página de agendamento do CLIENTE (um só para todas)
+  netlify/functions/agenda-publica.js     -> entrega à página do cliente só nome, logo, barbeiros e serviços
+  netlify/functions/agendar.js            -> grava o agendamento (valida tudo; o cliente nunca acessa o banco)
+  netlify/functions/criar-cobranca.js     -> gera o Pix (identifica a barbearia pelo login)
+  netlify/functions/webhook-infinitepay.js-> libera a barbearia certa após o pagamento
+  netlify/lib/comum.js
+  firestore.rules                         -> cada barbearia só acessa os próprios dados
+  scripts/criar-barbearia.js              -> você usa para cadastrar cada barbearia nova
+
+PASSO A PASSO (uma vez só)
+1) Firebase Console > Authentication > Método de login > ative "E-mail/senha".
+2) Firebase Console > Firestore > Regras > cole o firestore.rules e publique.
+   (Isso FECHA o banco: hoje ele está aberto para qualquer pessoa.)
+3) Suba esta pasta inteira no Netlify (GitHub -> Netlify). As variáveis de ambiente são as mesmas de antes
+   (FIREBASE_SERVICE_ACCOUNT_B64, INFINITEPAY_HANDLE, VALOR_CENTAVOS...).
+4) No seu computador: instale o Node, abra a pasta do projeto e rode "npm install".
+   Salve a chave de serviço do Firebase como chave.json nesta pasta (NUNCA suba no GitHub; já está no .gitignore).
+
+CADASTRAR A BARBEARIA DO BAIXINHO (traz os dados e o vencimento atuais)
+  MIGRAR=1 node scripts/criar-barbearia.js "Barbearia do Baixinho" email@dele.com SENHA https://link-do-logo.png
+  (no Windows PowerShell:  $env:MIGRAR=1; node scripts/criar-barbearia.js ...)
+
+CADASTRAR CADA BARBEARIA NOVA (ganha 7 dias de teste; o último número muda os dias)
+  node scripts/criar-barbearia.js "Barbearia X" email@dela.com SENHA https://link-do-logo.png 7
+
+LOGO: use um link https de imagem (ex.: PNG hospedado) ou deixe vazio para mostrar o poste de barbeiro.
+      Para trocar depois: Firestore > barbearias > (documento da barbearia) > campo "logo".
+NOME: campo "nome" no mesmo documento.
+VENCIMENTO: campo "vencimento" (AAAA-MM-DD). O pagamento pelo Pix soma 1 mês sozinho.
+
+DEPOIS DE TESTAR TUDO: apague no Firestore a pasta antiga "sistema" (dados antigos abertos).
+
+LINK DE AGENDAMENTO DE CADA BARBEARIA
+  Ao cadastrar, o script mostra o link:  https://SEU-SITE.netlify.app/agenda.html?b=nome-da-barbearia
+  (o "slug" é gerado do nome; fica no campo "slug" do cadastro no Firestore).
+  Se você JÁ cadastrou alguma barbearia antes desta versão, abra o documento dela em
+  Firestore > barbearias e crie o campo "slug" (texto, só letras minúsculas, números e hífen).
+  Se a assinatura vencer, a página do cliente mostra "Agendamento indisponível".
+  Use somente public/agenda.html. Apague o AGENDA.html / agenda.html antigos da raiz.
+
+OBSERVACAO: os horários de atendimento (seg-sex, sábado, domingo) são iguais para todas as barbearias
+  e estão em public/agenda.html e netlify/functions/agendar.js.

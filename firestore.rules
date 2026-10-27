@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Cada barbearia só enxerga a própria pasta (id = uid do usuário logado)
+    match /barbearias/{id} {
+      // Nome, logo e vencimento: o app só LÊ. Quem escreve é o servidor (Admin SDK).
+      allow read: if request.auth != null && request.auth.uid == id;
+      allow write: if false;
+
+      // Agenda, clientes, caixa, estoque...
+      // Exige que a barbearia tenha sido cadastrada por você (evita cadastros "de fora")
+      match /dados/{doc} {
+        allow read, write: if request.auth != null && request.auth.uid == id
+          && exists(/databases/$(database)/documents/barbearias/$(id));
+      }
+    }
+
+    // Todo o resto (inclusive "cobrancas") fica fechado para o navegador
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
