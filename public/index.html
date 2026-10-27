@@ -2,7 +2,6 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>E4 PREMIUM - GESTAO</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💈</text></svg>">
 <style>
 :root{--bg:#e3e8ef;--card:#fff;--ink:#14213d;--mut:#5c6678;--line:#d5dae2;--red:#c8102e;--ok:#1b7f4b;--edge:#aeb8c9;--pe:#070d1c}
 @media (prefers-color-scheme:dark){:root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}}
@@ -94,6 +93,7 @@ main{padding:16px 12px}
 <!-- Firebase App & Firestore Compat -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -108,13 +108,14 @@ main{padding:16px 12px}
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  const auth = firebase.auth();
 </script>
 </head><body>
 <div id="lock"></div>
 <div id="paywall" hidden></div>
 <div id="notif-banner">Novo agendamento recebido! 🔔</div>
 
-<div class="app" hidden><aside><div class="brand"><div class="pole"></div><b>BARBEARIA<br>DO BAIXINHO</b><small>E4 PREMIUM - GESTAO</small></div>
+<div class="app" hidden><aside><div class="brand"><img id="blogo" alt="" hidden style="max-width:130px;max-height:90px;object-fit:contain"><div class="pole" id="bpole"></div><b id="bnome">&nbsp;</b><small>E4 PREMIUM - GESTAO</small></div>
 <nav><button data-t="agenda">Agenda</button><button data-t="cli">Clientes</button><button data-t="caixa">Caixa</button><button data-t="com">Comissões</button><button data-t="estoque">Estoque</button><button data-t="cad">Cadastros</button></nav>
 <button id="lg" onclick="logout()">Sair</button></aside>
 <main></main></div>
@@ -130,6 +131,19 @@ let S={barbers:[],services:[],appts:[],tx:[],stock:[],clients:[]};
 // Vencimento vive em sistema/assinatura (somente leitura aqui; só o servidor altera)
 let VENC=null, dadosOk=false, assinOk=false;
 let primeiraCarga = true;
+
+// Cada barbearia = 1 usuário do Firebase Auth. O id da barbearia é o uid dele.
+let BID = null;
+const dadosRef = () => db.collection("barbearias").doc(BID).collection("dados").doc("principal");
+function aplicarMarca(c){
+  const nome = String(c.nome || '').trim();
+  $('#bnome').textContent = nome || 'Minha Barbearia';
+  document.title = (nome || 'Gestão') + ' · E4 PREMIUM';
+  const img = $('#blogo'), pole = $('#bpole');
+  if (typeof c.logo === 'string' && /^(https:\/\/|data:image\/)/.test(c.logo)) {
+    img.src = c.logo; img.hidden = false; pole.style.display = 'none';
+  } else { img.hidden = true; pole.style.display = ''; }
+}
 
 // Função para falar em voz alta (Voz feminina)
 function falarNotificacao(texto) {
@@ -155,7 +169,7 @@ function falarNotificacao(texto) {
 
 async function loadFromFirebase(){
   try {
-    db.collection("sistema").doc("dados_barbearia").onSnapshot((docSnap) => {
+    dadosRef().onSnapshot((docSnap) => {
       if (docSnap.exists && docSnap.data() && Object.keys(docSnap.data()).length > 0) {
         const dadosNovos = docSnap.data();
         if(!dadosNovos.clients) dadosNovos.clients = [];
@@ -195,7 +209,8 @@ async function loadFromFirebase(){
       }
     });
     // Vencimento: quando o servidor soma 1 mês após o pagamento, a tela libera sozinha
-    db.collection("sistema").doc("assinatura").onSnapshot((snap) => {
+    db.collection("barbearias").doc(BID).onSnapshot((snap) => {
+      aplicarMarca(snap.exists ? snap.data() : {});
       VENC = (snap.exists && snap.data().vencimento) ? snap.data().vencimento : null;
       assinOk = true;
       verificarVencimento();
@@ -210,7 +225,7 @@ async function loadFromFirebase(){
 
 async function save(){
   try {
-    await db.collection("sistema").doc("dados_barbearia").set(S);
+    await dadosRef().set(S);
   } catch(e) {
     console.error("Erro ao salvar no Firebase:", e);
   }
@@ -257,6 +272,7 @@ function showPaywall(){
       <p>Para desbloquear, pague a mensalidade de <b>${VALOR_MENSALIDADE_TXT}</b> por Pix. Assim que o pagamento for confirmado, o sistema é liberado automaticamente.</p>
       <button class="pri" id="btn-pagar" onclick="pagarMensalidade()" style="width:100%; margin-top:8px;">Pagar mensalidade (Pix)</button>
       <p id="pay-msg" class="out" style="margin-top:10px; font-size:13px;"></p>
+      <button onclick="logout()" style="width:100%; margin-top:8px;">Sair</button>
     </div>
   `;
 }
@@ -267,7 +283,8 @@ async function pagarMensalidade(){
   btn.textContent = 'Gerando pagamento...';
   msg.textContent = '';
   try {
-    const r = await fetch(API_MENSALIDADE, { method: 'POST' });
+    const token = await auth.currentUser.getIdToken();
+    const r = await fetch(API_MENSALIDADE, { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
     const d = await r.json();
     if (!r.ok || !d.url) throw new Error(d.error || 'Falha ao gerar o pagamento');
     window.location.href = d.url; // página de pagamento da InfinitePay
@@ -433,19 +450,21 @@ function addService(){
 
 function del(k,id){S[k]=S[k].filter(x=>x.id!==id); render(); save();}
 
-function logout(){try{sessionStorage.removeItem('ok')}catch(e){}location.reload()}
+function logout(){ auth.signOut().then(() => location.reload()); }
 
 function lockUI(){
   $('#lock').hidden = false;
   $('.app').hidden = true;
+  $('#paywall').hidden = true;
   $('#lock').innerHTML = `
     <div class="card">
       <h2>Entrar no Sistema</h2>
-      <p class="mut">Digite o usuário e a senha de acesso (admin / admin).</p>
+      <p class="mut">Use o e-mail e a senha da sua barbearia.</p>
       <div class="row" style="flex-direction:column; align-items:stretch;">
-        <input id="un" type="text" placeholder="Usuário" autocomplete="username" style="margin-bottom:8px;">
+        <input id="un" type="email" placeholder="E-mail" autocomplete="username" style="margin-bottom:8px;">
         <input id="pw" type="password" placeholder="Senha" autocomplete="current-password">
         <button class="pri" style="margin-top:10px;" onclick="unlock()">Entrar</button>
+        <button style="margin-top:8px;" onclick="esqueci()">Esqueci a senha</button>
       </div>
       <p id="pe" class="out" style="margin-top:8px;"></p>
     </div>`;
@@ -453,17 +472,17 @@ function lockUI(){
   $('#lock').onkeydown = e => { if(e.key === 'Enter') unlock(); }
 }
 
-function unlock(){
-  const u = v('un');
-  const p = v('pw');
-  const e = $('#pe');
-  
-  if(u === 'admin' && p === 'admin'){
-    try{ sessionStorage.setItem('ok', '1'); }catch(x){}
-    start();
-  } else {
-    e.textContent = 'Usuário ou senha incorretos. Use admin / admin.';
-  }
+async function unlock(){
+  const e = $('#pe'); e.textContent = 'Entrando...';
+  try { await auth.signInWithEmailAndPassword(v('un').trim(), v('pw')); }
+  catch(x) { e.textContent = 'E-mail ou senha incorretos.'; }
+}
+
+async function esqueci(){
+  const e = $('#pe'), m = v('un').trim();
+  if(!m){ e.textContent = 'Digite seu e-mail acima e clique de novo.'; return; }
+  try { await auth.sendPasswordResetEmail(m); e.textContent = 'Enviamos um link para redefinir a senha no seu e-mail.'; }
+  catch(x) { e.textContent = 'Não foi possível enviar. Confira o e-mail.'; }
 }
 
 function start(){
@@ -473,8 +492,8 @@ function start(){
 }
 
 let ok = false;
-try{ ok = sessionStorage.getItem('ok') === '1'; }catch(e){}
-
-// Inicialização controlada pelo Firebase
-loadFromFirebase();
+auth.onAuthStateChanged(u => {
+  if (u) { BID = u.uid; ok = true; loadFromFirebase(); }
+  else { ok = false; BID = null; lockUI(); }
+});
 </script></body></html>
