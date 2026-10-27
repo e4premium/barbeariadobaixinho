@@ -42,4 +42,18 @@ function resposta(status, obj, extraHeaders = {}) {
   };
 }
 
-module.exports = { admin, getDb, hojeBR, somaMes, proximoVencimento, resposta };
+const slugValido = (s) => /^[a-z0-9-]{2,60}$/.test(s);
+
+// Acha a barbearia pelo "slug" do link (agenda.html?b=slug)
+async function acharBarbearia(db, slug) {
+  const q = await db.collection('barbearias').where('slug', '==', slug).limit(1).get();
+  return q.empty ? null : q.docs[0];
+}
+
+// Assinatura em dia? Sem vencimento ou vencido = bloqueado
+function emDia(cfg) {
+  const v = cfg && cfg.vencimento;
+  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && hojeBR() <= v;
+}
+
+module.exports = { admin, getDb, hojeBR, somaMes, proximoVencimento, resposta, slugValido, acharBarbearia, emDia };
