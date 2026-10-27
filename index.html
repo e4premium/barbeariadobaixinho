@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E4 PREMIUM - GESTAO</title>
+<style>
+:root{--bg:#e3e8ef;--card:#fff;--ink:#14213d;--mut:#5c6678;--line:#d5dae2;--red:#c8102e;--ok:#1b7f4b;--edge:#aeb8c9;--pe:#070d1c}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(29,78,158,.18),transparent),var(--bg);color:var(--ink);font:15px/1.5 "Avenir Next","Segoe UI",Helvetica,Arial,sans-serif}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+aside{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:16px;padding:22px 16px;background:linear-gradient(180deg,#1a2a4d,#0f1830);color:#e8ecf4;z-index:2;box-shadow:6px 0 0 #0b1429,14px 0 30px rgba(0,0,0,.35);overflow-y:auto;scrollbar-width:none}
+aside::-webkit-scrollbar{display:none}
+.brand{display:flex;flex-direction:column;align-items:center;gap:4px}
+.brand b{font-size:18px;letter-spacing:.3px;text-align:center;line-height:1.2}.brand small{color:#9fb0d3}
+.pole{position:relative;overflow:hidden;width:34px;height:100px;border:solid #cdd3df;border-width:7px 0;border-radius:10px;box-shadow:0 8px 0 #0b1429,0 14px 14px rgba(0,0,0,.45);margin-bottom:8px;flex-shrink:0}
+.pole::before{content:"";position:absolute;inset:-60px 0;background:repeating-linear-gradient(-45deg,#c8102e 0 10px,#fff 10px 20px,#1d4e9e 20px 30px);animation:spin 2.4s linear infinite}
+.pole::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.45),rgba(255,255,255,.55) 30%,rgba(255,255,255,0) 55%,rgba(0,0,0,.5))}
+@keyframes spin{to{transform:translateY(40.91px)}}
+nav{display:flex;flex-direction:column;gap:10px}
+nav button{width:100%;text-align:left;padding:10px 12px;background:#1f2f55;color:#cfd8ec;border:1px solid #2c4070;box-shadow:0 3px 0 #0b1429}
+nav button:hover{background:#27396a}
+nav button.on{background:var(--red);color:#fff;border-color:#e2425a;transform:translateY(2px);box-shadow:0 1px 0 #6e0818;font-weight:600}
+#lg{margin-top:auto;background:#2a1520;color:#ffb3bd;border-color:#4a2030;box-shadow:0 3px 0 #12080d;flex-shrink:0}
+main{max-width:920px;width:100%;margin:0 auto;padding:26px 22px 70px}
+.flip{animation:flip .45s ease}
+@keyframes flip{from{opacity:0;transform:perspective(1200px) rotateY(-16deg) translateX(-26px)}to{opacity:1;transform:perspective(1200px) rotateY(0)}}
+.card,.sum div{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:1px 1px 0 var(--edge),2px 2px 0 var(--edge),3px 3px 0 var(--edge),4px 4px 0 var(--edge),5px 5px 0 var(--edge),0 22px 30px -12px rgba(8,16,40,.4)}
+.card{padding:14px 16px;margin-bottom:22px;transform:perspective(900px) rotateX(2deg);transform-origin:50% 100%;transition:transform .25s}
+.card:hover{transform:perspective(900px) rotateX(0) translate(-2px,-3px)}
+h2{font-size:16px;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+input,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);min-width:0;box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}
+button{font:inherit;padding:7px 12px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--edge);transition:transform .08s,box-shadow .08s}
+button:active{transform:translateY(3px);box-shadow:0 0 0 var(--edge)}
+button.pri{background:var(--ink);color:var(--card);border-color:var(--ink);box-shadow:0 3px 0 var(--pe)}
+button.x{color:var(--red)}
+a.btn{font:inherit;padding:7px 12px;border:1px solid var(--ok);border-radius:7px;color:var(--ok);text-decoration:none;box-shadow:0 3px 0 var(--edge)}
+button:focus-visible,input:focus-visible,select:focus-visible,a.btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.it{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.it:first-of-type{border-top:0}
+.it .g{flex:1;min-width:160px}
+.mut{color:var(--mut)}
+.tag{font-size:12px;padding:2px 8px;border-radius:10px;border:1px solid var(--line)}
+.feito{color:var(--ok);border-color:var(--ok)}
+.cancelado,.low{color:var(--red);border-color:var(--red)}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:22px}
+.sum div{padding:10px 14px}
+.sum b{display:block;font-size:22px}
+table{width:100%0;border-collapse:collapse}
+th,td{text-align:left;padding:8px 6px;border-top:1px solid var(--line)}
+th{font-weight:600;color:var(--mut);border-top:0}
+td.n,th.n{text-align:right}
+.in{color:var(--ok)}.out{color:var(--red)}
+#lock,#paywall{max-width:420px;margin:60px auto;padding:0 14px}
+
+/* Banner de Notificação Visual */
+#notif-banner {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--ok);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  font-weight: 600;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(-120px);
+  transition: transform 0.3s ease;
+}
+#notif-banner.show {
+  transform: translateY(0);
+}
+
+@media (max-width:720px){
+.app{grid-template-columns:1fr}
+aside{position:relative;height:auto;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:16px;box-shadow:0 5px 0 #0b1429}
+.brand{flex-direction:column;align-items:center;text-align:center;gap:6px}
+.brand small{display:block;color:#9fb0d3}
+.pole{width:32px;height:90px;border-width:6px 0;margin-bottom:4px}
+nav{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:6px}
+nav button{width:auto;padding:8px 12px;font-size:13px}
+#lg{margin:0;width:auto;padding:8px 24px}
+main{padding:16px 12px}
+}
+@media (prefers-reduced-motion:reduce){.pole::before,.flip{animation:none}.card{transition:none}}
+</style>
+
+<!-- Firebase App & Firestore Compat -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0fZrksbEj3WIDmNHXRdE9o8pbTWnySwM",
+    authDomain: "barbearia-d51ac.firebaseapp.com",
+    projectId: "barbearia-d51ac",
+    storageBucket: "barbearia-d51ac.firebasestorage.app",
+    messagingSenderId: "358041934550",
+    appId: "1:358041934550:web:d3844c2ee7a05c1f488777",
+    measurementId: "G-7CSZEYTFVL"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+</head><body>
+<div id="lock"></div>
+<div id="paywall" hidden></div>
+<div id="notif-banner">Novo agendamento recebido! 🔔</div>
+
+<div class="app" hidden><aside><div class="brand"><div class="pole"></div><b>BARBEARIA<br>DO BAIXINHO</b><small>E4 PREMIUM - GESTAO</small></div>
+<nav><button data-t="agenda">Agenda</button><button data-t="cli">Clientes</button><button data-t="caixa">Caixa</button><button data-t="com">Comissões</button><button data-t="estoque">Estoque</button><button data-t="cad">Cadastros</button></nav>
+<button id="lg" onclick="logout()">Sair</button></aside>
+<main></main></div>
+<script>
+const $=s=>document.querySelector(s),v=id=>document.getElementById(id).value;
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const brl=n=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=d=>d.split('-').reverse().join('/');
+
+let S={barbers:[],services:[],appts:[],tx:[],stock:[],clients:[]};
+// Vencimento vive em sistema/assinatura (somente leitura aqui; só o servidor altera)
+let VENC=null, dadosOk=false, assinOk=false;
+let primeiraCarga = true;
+
+// Função para falar em voz alta (Voz feminina)
+function falarNotificacao(texto) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 1.0; 
+    utterance.pitch = 1.2;
+
+    const vozes = window.speechSynthesis.getVoices();
+    const vozFeminina = vozes.find(v => 
+      v.lang.includes('pt') && 
+      (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Google') || v.name.includes('Francisca') || v.name.includes('Female'))
+    );
+    if (vozFeminina) {
+      utterance.voice = vozFeminina;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+async function loadFromFirebase(){
+  try {
+    db.collection("sistema").doc("dados_barbearia").onSnapshot((docSnap) => {
+      if (docSnap.exists && docSnap.data() && Object.keys(docSnap.data()).length > 0) {
+        const dadosNovos = docSnap.data();
+        if(!dadosNovos.clients) dadosNovos.clients = [];
+        delete dadosNovos.vencimento; // o vencimento agora fica em sistema/assinatura
+        
+        const qtdApptsAntiga = S.appts ? S.appts.length : 0;
+        const qtdApptsNova = dadosNovos.appts ? dadosNovos.appts.length : 0;
+
+        if (!primeiraCarga && qtdApptsNova > qtdApptsAntiga) {
+          const novoAgendamento = dadosNovos.appts[dadosNovos.appts.length - 1];
+          if (novoAgendamento) {
+            const dataFormatada = fd(novoAgendamento.date);
+            const fraseFala = `${novoAgendamento.client} fez um agendamento para o dia ${dataFormatada} as ${novoAgendamento.time}`;
+            
+            falarNotificacao(fraseFala);
+            
+            const banner = $('#notif-banner');
+            banner.textContent = `${novoAgendamento.client} agendou para ${dataFormatada} às ${novoAgendamento.time}! 🔔`;
+            banner.classList.add('show');
+            setTimeout(() => { banner.classList.remove('show'); }, 6000);
+          }
+        }
+
+        S = dadosNovos;
+        primeiraCarga = false;
+        dadosOk = true;
+        
+        verificarVencimento();
+      } else {
+        S = {
+          barbers:[{id:'b1',name:'Carlos',pct:50},{id:'b2',name:'Diego',pct:40}],
+          services:[{id:'s1',name:'Corte',price:40},{id:'s2',name:'Barba',price:30},{id:'s3',name:'Corte + barba',price:65},{id:'s4',name:'Sobrancelha',price:15}],
+          appts:[],tx:[],stock:[{id:'p1',name:'Pomada modeladora',qty:8,min:3},{id:'p2',name:'Óleo para barba',qty:2,min:3}],
+          clients:[]
+        };
+        save();
+      }
+    });
+    // Vencimento: quando o servidor soma 1 mês após o pagamento, a tela libera sozinha
+    db.collection("sistema").doc("assinatura").onSnapshot((snap) => {
+      VENC = (snap.exists && snap.data().vencimento) ? snap.data().vencimento : null;
+      assinOk = true;
+      verificarVencimento();
+    }, (err) => {
+      console.error("Erro ao ler assinatura:", err);
+      $('#lock').innerHTML = '<div class="card"><p class="out">Não foi possível verificar a assinatura. Recarregue a página.</p></div>';
+    });
+  } catch(e) {
+    console.error("Erro ao carregar do Firebase:", e);
+  }
+}
+
+async function save(){
+  try {
+    await db.collection("sistema").doc("dados_barbearia").set(S);
+  } catch(e) {
+    console.error("Erro ao salvar no Firebase:", e);
+  }
+}
+
+// Endereço da função que gera a cobrança (troque pelo seu site do Netlify)
+const API_MENSALIDADE = "https://SEU-SITE.netlify.app/.netlify/functions/criar-cobranca";
+const VALOR_MENSALIDADE_TXT = "R$ 5,00"; // só para exibir; o valor real está na variável VALOR_CENTAVOS do servidor
+
+// Verificar se o sistema venceu (precisa dos dados e do vencimento carregados)
+function verificarVencimento(){
+  if (!dadosOk || !assinOk) return;
+  const pw = $('#paywall');
+  if (!VENC || today() > VENC) {
+    showPaywall();
+  } else {
+    // Em dia: esconde o bloqueio (é assim que libera sozinho depois do pagamento)
+    pw.hidden = true;
+    pw.dataset.built = '';
+    if (ok) start();
+    else if ($('#lock').hidden || !$('#lock').innerHTML) lockUI();
+  }
+}
+
+function showPaywall(){
+  $('#lock').hidden = true;
+  $('.app').hidden = true;
+  const pw = $('#paywall');
+  pw.hidden = false;
+
+  // Já desenhado para este vencimento: não redesenha (preserva o estado do botão)
+  const marca = String(VENC);
+  if (pw.dataset.built === marca) return;
+  pw.dataset.built = marca;
+
+  const quando = VENC
+    ? `O período de uso deste mês expirou em <b>${fd(VENC)}</b>.`
+    : 'A assinatura deste sistema não está ativa.';
+
+  pw.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <h2 style="color:var(--red);">⚠️ Acesso Bloqueado por Vencimento</h2>
+      <p class="mut">${quando}</p>
+      <p>Para desbloquear, pague a mensalidade de <b>${VALOR_MENSALIDADE_TXT}</b> por Pix. Assim que o pagamento for confirmado, o sistema é liberado automaticamente.</p>
+      <button class="pri" id="btn-pagar" onclick="pagarMensalidade()" style="width:100%; margin-top:8px;">Pagar mensalidade (Pix)</button>
+      <p id="pay-msg" class="out" style="margin-top:10px; font-size:13px;"></p>
+    </div>
+  `;
+}
+
+async function pagarMensalidade(){
+  const btn = $('#btn-pagar'), msg = $('#pay-msg');
+  btn.disabled = true;
+  btn.textContent = 'Gerando pagamento...';
+  msg.textContent = '';
+  try {
+    const r = await fetch(API_MENSALIDADE, { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok || !d.url) throw new Error(d.error || 'Falha ao gerar o pagamento');
+    window.location.href = d.url; // página de pagamento da InfinitePay
+  } catch(e) {
+    console.error(e);
+    msg.textContent = 'Não foi possível gerar o pagamento agora. Tente novamente em instantes.';
+    btn.disabled = false;
+    btn.textContent = 'Pagar mensalidade (Pix)';
+  }
+}
+
+let tab='agenda',day=today(),month=today().slice(0,7),opn=null;
+const monthTx=()=>S.tx.filter(t=>t.date.startsWith(month));
+const monthPick=()=>`<div class="row"><label>Mês <input type="month" value="${month}" onchange="month=this.value||month;render()"></label></div>`;
+
+const V={
+agenda(){
+ if(!S.barbers.length||!S.services.length)return `<div class="card"><p>Cadastre ao menos um barbeiro e um serviço em Cadastros para agendar.</p></div>`;
+ const l=S.appts.filter(a=>a.date===day).sort((a,b)=>a.time.localeCompare(b.time));
+ return `<div class="row"><label>Dia <input type="date" value="${day}" onchange="day=this.value||day;render()"></label></div>
+ <div class="card"><h2>Novo agendamento</h2><div class="row">
+ <input id="at" type="time" value="09:00"><input id="ac" list="cl" placeholder="Nome do cliente"><datalist id="cl">${S.clients.map(c=>`<option value="${esc(c.name)}">`).join('')}</datalist><input id="aw" type="tel" placeholder="WhatsApp (se novo)" style="width:150px">
+ <select id="ab">${S.barbers.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select>
+ <select id="as">${S.services.map(s=>`<option value="${s.id}">${esc(s.name)} – ${brl(s.price)}</option>`).join('')}</select>
+ <button class="pri" onclick="addAppt()">Agendar</button></div></div>
+ <div class="card"><h2>Atendimentos de ${fd(day)}</h2>${l.length?l.map(a=>`<div class="it"><b>${a.time}</b>
+ <div class="g">${esc(a.client)}<div class="mut">${esc(a.sn)} · ${brl(a.price)} · ${esc(a.bn)}</div></div>
+ <span class="tag ${a.status}">${a.status}</span>
+ ${a.status==='agendado'?`${wa(a)}<button class="pri" onclick="done('${a.id}')">Concluir e receber</button><button onclick="cancel('${a.id}')">Cancelar</button>`:''}
+ <button class="x" onclick="delAppt('${a.id}')">Excluir</button></div>`).join(''):'<p class="mut">Nenhum atendimento neste dia. Agende o primeiro acima.</p>'}</div>`},
+cli(){
+ return `<div class="card"><h2>Novo cliente</h2><div class="row"><input id="kn" placeholder="Nome"><input id="kw" type="tel" placeholder="WhatsApp com DDD"><button class="pri" onclick="addClient()">Adicionar</button></div></div>
+ <div class="card"><h2>Clientes</h2>${S.clients.length?S.clients.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(k=>{
+ const h=S.appts.filter(a=>a.cid===k.id).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)),f=h.filter(a=>a.status==='feito'),t=f.reduce((s,a)=>s+a.price,0);
+ return `<div class="it"><div class="g">${esc(k.name)}<div class="mut">${esc(k.phone||'sem WhatsApp')} · ${f.length} atendimento(s) · ${brl(t)}${f.length?' · último em '+fd(f[0].date):''}</div></div>
+ <button onclick="opn=opn==='${k.id}'?null:'${k.id}';render()">Histórico</button><button class="x" onclick="delClient('${k.id}')">Excluir</button></div>
+ ${opn===k.id?`<div style="padding:0 0 8px 12px">${h.length?h.map(a=>`<div class="mut">${fd(a.date)} ${a.time} – ${esc(a.sn)} com ${esc(a.bn)} · ${brl(a.price)} · ${a.status}</div>`).join(''):'<div class="mut">Sem atendimentos ainda.</div>'}</div>`:''}`}).join(''):'<p class="mut">Nenhum cliente. Eles também são criados ao agendar.</p>'}</div>`},
+caixa(){
+ const t=monthTx(),i=t.filter(x=>x.type==='in').reduce((s,x)=>s+x.val,0),o=t.filter(x=>x.type==='out').reduce((s,x)=>s+x.val,0);
+ return `${monthPick()}<div class="sum"><div>Entradas<b class="in">${brl(i)}</b></div><div>Saídas<b class="out">${brl(o)}</b></div><div>Saldo<b>${brl(i-o)}</b></div></div>
+ <div class="card"><h2>Lançamento manual</h2><div class="row"><select id="tt"><option value="in">Entrada</option><option value="out">Saída</option></select>
+ <input id="td" placeholder="Descrição (ex.: aluguel, venda de pomada)"><input id="tv" type="number" min="0" step="0.01" placeholder="Valor" style="width:110px">
+ <button class="pri" onclick="addTx()">Lançar</button></div></div>
+ <div class="card"><h2>Movimentos do mês</h2>${t.length?t.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<div class="it"><span class="mut">${fd(x.date)}</span><div class="g">${esc(x.desc)}</div>
+ <b class="${x.type}">${x.type==='in'?'+':'−'} ${brl(x.val)}</b><button class="x" onclick="delTx('${x.id}')">Excluir</button></div>`).join(''):'<p class="mut">Sem movimentos neste mês. Conclua um atendimento ou faça um lançamento.</p>'}</div>`},
+com(){
+ const t=monthTx().filter(x=>x.type==='in'&&x.bid);let tot=0;
+ const rows=S.barbers.map(b=>{const m=t.filter(x=>x.bid===b.id),f=m.reduce((s,x)=>s+x.val,0),c=f*b.pct/100;tot+=c;
+ return `<tr><td>${esc(b.name)}</td><td class="n">${m.length}</td><td class="n">${brl(f)}</td><td class="n">${b.pct}%</td><td class="n"><b>${brl(c)}</b></td></tr>`}).join('');
+ return `${monthPick()}<div class="card"><h2>Comissões do mês</h2>${S.barbers.length?`<table><tr><th>Barbeiro</th><th class="n">Atend.</th><th class="n">Faturado</th><th class="n">Taxa</th><th class="n">A pagar</th></tr>${rows}</table>
+ <p>Total a pagar: <b>${brl(tot)}</b></p><p class="mut">A taxa de cada barbeiro é definida em Cadastros.</p>`:'<p class="mut">Nenhum barbeiro cadastrado.</p>'}</div>`},
+estoque(){
+ return `<div class="card"><h2>Novo produto</h2><div class="row"><input id="pn" placeholder="Produto"><input id="pq" type="number" min="0" placeholder="Qtd." style="width:90px"><input id="pm" type="number" min="0" placeholder="Mínimo" style="width:90px">
+ <button class="pri" onclick="addStock()">Adicionar</button></div></div>
+ <div class="card"><h2>Produtos</h2>${S.stock.length?S.stock.map(p=>`<div class="it"><div class="g">${esc(p.name)}<div class="mut">Mínimo: ${p.min}</div></div>
+ ${p.qty<=p.min?'<span class="tag low">Repor</span>':''}<button onclick="adj('${p.id}',-1)" aria-label="Diminuir">−</button><b>${p.qty}</b><button onclick="adj('${p.id}',1)" aria-label="Aumentar">+</button>
+ <button class="x" onclick="del('stock','${p.id}')">Excluir</button></div>`).join(''):'<p class="mut">Nenhum produto. Adicione o primeiro acima.</p>'}</div>`},
+cad(){
+ return `<div class="card"><h2>Barbeiros</h2><div class="row"><input id="bn" placeholder="Nome"><input id="bp" type="number" min="0" max="100" placeholder="Comissão %" style="width:120px"><button class="pri" onclick="addBarber()">Adicionar</button></div>
+ ${S.barbers.map(b=>`<div class="it"><div class="g">${esc(b.name)}</div><label class="mut">Comissão <input type="number" min="0" max="100" value="${b.pct}" style="width:70px" onchange="setPct('${b.id}',this.value)">%</label>
+ <button class="x" onclick="del('barbers','${b.id}')">Excluir</button></div>`).join('')}</div>
+ <div class="card"><h2>Serviços</h2><div class="row"><input id="sn" placeholder="Serviço"><input id="sp" type="number" min="0" step="0.01" placeholder="Preço" style="width:110px"><button class="pri" onclick="addService()">Adicionar</button></div>
+ ${S.services.map(s=>`<div class="it"><div class="g">${esc(s.name)}</div><b>${brl(s.price)}</b><button class="x" onclick="del('services','${s.id}')">Excluir</button></div>`).join('')}</div>`}
+};
+
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  $('main').innerHTML=V[tab]();
+}
+
+document.addEventListener("click", e => {
+  if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
+
+  const btn = e.target.closest("nav button[data-t]");
+  if (btn) {
+    tab = btn.dataset.t;
+    render();
+    const m = $('main');
+    m.classList.remove('flip');
+    void m.offsetWidth;
+    m.classList.add('flip');
+  }
+});
+
+function addAppt(){
+ const c=v('ac').trim();if(!c){alert('Informe o nome do cliente.');return}
+ const timeVal = v('at')||'09:00';
+ const barberId = v('ab');
+ 
+ const ocupado = S.appts.some(a => a.date === day && a.time === timeVal && a.bid === barberId && a.status === 'agendado');
+ if(ocupado){
+   alert('Este barbeiro já possui um agendamento marcado para este horário!');
+   return;
+ }
+
+ const b=S.barbers.find(x=>x.id===barberId),s=S.services.find(x=>x.id===v('as'));
+ let k=S.clients.find(x=>x.name.toLowerCase()===c.toLowerCase());if(!k){k={id:uid(),name:c,phone:v('aw').trim()};S.clients.push(k)}else if(!k.phone&&v('aw').trim())k.phone=v('aw').trim();
+ S.appts.push({id:uid(),date:day,time:timeVal,client:k.name,cid:k.id,bid:b.id,bn:b.name,sn:s.name,price:s.price,status:'agendado'});
+ render(); save();
+}
+
+function done(id){
+ const a=S.appts.find(x=>x.id===id);a.status='feito';
+ S.tx.push({id:uid(),aid:id,date:a.date,type:'in',desc:a.sn+' – '+a.client,val:a.price,bid:a.bid});
+ render(); save();
+}
+
+function cancel(id){S.appts.find(x=>x.id===id).status='cancelado'; render(); save();}
+function delAppt(id){S.appts=S.appts.filter(x=>x.id!==id);S.tx=S.tx.filter(x=>x.aid!==id); render(); save();}
+
+function addTx(){
+ const d=v('td').trim(),n=parseFloat(v('tv'));if(!d||!(n>0)){alert('Informe descrição e valor maior que zero.');return}
+ S.tx.push({id:uid(),date:month===today().slice(0,7)?today():month+'-01',type:v('tt'),desc:d,val:n});
+ render(); save();
+}
+
+function delTx(id){S.tx=S.tx.filter(x=>x.id!==id); render(); save();}
+
+function wa(a){
+  const k=S.clients.find(x=>x.id===a.cid);
+  if(!k||!k.phone)return'';
+  let p=k.phone.replace(/\D/g,'');
+  if(!p)return'';
+  if(p.length<=11)p='55'+p;
+  
+  const m=`Olá, *${k.name}*! Lembrando do seu horário (*${a.sn}*) com *${a.bn}* em *${fd(a.date)}* às *${a.time}*. Pode confirmar? Obrigado!`;
+  
+  return `<a class="btn" target="_blank" rel="noopener" href="whatsapp://send?phone=${p}&text=${encodeURIComponent(m)}">Lembrar no WhatsApp</a>`
+}
+
+function addClient(){
+ const n=v('kn').trim();if(!n){alert('Informe o nome do cliente.');return}
+ if(S.clients.some(x=>x.name.toLowerCase()===n.toLowerCase())){alert('Esse cliente já está cadastrado.');return}
+ S.clients.push({id:uid(),name:n,phone:v('kw').trim()});
+ render(); save();
+}
+
+function delClient(id){S.clients=S.clients.filter(x=>x.id!==id); render(); save();}
+
+function addStock(){
+ const n=v('pn').trim();if(!n){alert('Informe o nome do produto.');return}
+ S.stock.push({id:uid(),name:n,qty:+v('pq')||0,min:+v('pm')||0});
+ render(); save();
+}
+
+function adj(id,d){const p=S.stock.find(x=>x.id===id);p.qty=Math.max(0,p.qty+d); render(); save();}
+
+function addBarber(){
+ const n=v('bn').trim();if(!n){alert('Informe o nome do barbeiro.');return}
+ S.barbers.push({id:uid(),name:n,pct:Math.min(100,+v('bp')||0)});
+ render(); save();
+}
+
+function setPct(id,x){S.barbers.find(b=>b.id===id).pct=Math.min(100,Math.max(0,+x||0)); save();}
+
+function addService(){
+ const n=v('sn').trim(),p=parseFloat(v('sp'));if(!n||!(p>=0)){alert('Informe nome e preço do serviço.');return}
+ S.services.push({id:uid(),name:n,price:p});
+ render(); save();
+}
+
+function del(k,id){S[k]=S[k].filter(x=>x.id!==id); render(); save();}
+
+function logout(){try{sessionStorage.removeItem('ok')}catch(e){}location.reload()}
+
+function lockUI(){
+  $('#lock').hidden = false;
+  $('.app').hidden = true;
+  $('#lock').innerHTML = `
+    <div class="card">
+      <h2>Entrar no Sistema</h2>
+      <p class="mut">Digite o usuário e a senha de acesso (admin / admin).</p>
+      <div class="row" style="flex-direction:column; align-items:stretch;">
+        <input id="un" type="text" placeholder="Usuário" autocomplete="username" style="margin-bottom:8px;">
+        <input id="pw" type="password" placeholder="Senha" autocomplete="current-password">
+        <button class="pri" style="margin-top:10px;" onclick="unlock()">Entrar</button>
+      </div>
+      <p id="pe" class="out" style="margin-top:8px;"></p>
+    </div>`;
+  $('#un').focus();
+  $('#lock').onkeydown = e => { if(e.key === 'Enter') unlock(); }
+}
+
+function unlock(){
+  const u = v('un');
+  const p = v('pw');
+  const e = $('#pe');
+  
+  if(u === 'admin' && p === 'admin'){
+    try{ sessionStorage.setItem('ok', '1'); }catch(x){}
+    start();
+  } else {
+    e.textContent = 'Usuário ou senha incorretos. Use admin / admin.';
+  }
+}
+
+function start(){
+  $('#lock').hidden = true;
+  $('.app').hidden = false;
+  render();
+}
+
+let ok = false;
+try{ ok = sessionStorage.getItem('ok') === '1'; }catch(e){}
+
+// Inicialização controlada pelo Firebase
+loadFromFirebase();
+</script></body></html>
