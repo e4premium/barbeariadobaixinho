@@ -2,7 +2,6 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Agendamento Online</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💈</text></svg>">
 <style>
 :root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}
 *{box-sizing:border-box}
@@ -103,6 +102,7 @@ async function iniciar(){
     $('#cliBarber').innerHTML = d.barbers.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
     $('#cliService').innerHTML = d.services.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} – R$ ${Number(x.price).toFixed(2)}</option>`).join('');
     $('#formArea').hidden = false;
+    gerarHorarios();
   } catch(e){
     console.error(e);
     indisponivel();
@@ -121,22 +121,9 @@ function gerarHorarios() {
     const dataObj = new Date(ano, mes - 1, dia);
     const diaSemana = dataObj.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
 
-    if (diaSemana === 0) {
-      // Domingo: 10:00 as 13:30
-      horarios = ["10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30"];
-    } else if (diaSemana === 6) {
-      // Sábado: 09:00 as 13:30 e 15:00 as 20:30
-      horarios = [
-        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
-      ];
-    } else {
-      // Segunda a Sexta: 09:00 as 12:00 e 15:00 as 19:30
-      horarios = [
-        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00",
-        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"
-      ];
-    }
+    // Os horários vêm do servidor, de acordo com o que a barbearia cadastrou
+    const H = (S && S.horarios) || {};
+    horarios = (diaSemana === 0 ? H.domingo : diaSemana === 6 ? H.sabado : H.semana) || [];
   }
 
   // Se o horário selecionado atualmente não estiver na lista do novo dia, limpa a seleção
@@ -146,7 +133,8 @@ function gerarHorarios() {
 
   let html = '';
   if (horarios.length === 0) {
-    grid.innerHTML = '<span class="mut" style="grid-column: span 4; text-align:center;">Selecione uma data válida</span>';
+    const aviso = !dataInput ? 'Selecione uma data válida' : !S ? 'A carregar horários...' : 'Sem atendimento neste dia';
+    grid.innerHTML = `<span style="grid-column: span 4; text-align:center; color:var(--mut); font-weight:400;">${aviso}</span>`;
     return;
   }
 
