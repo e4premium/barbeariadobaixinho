@@ -6,83 +6,207 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Administração — Barbearias</title>
 <style>
-  :root { --bg:#f4f5f7; --card:#fff; --txt:#1c1e21; --mut:#6b7280; --bd:#d9dce1; --pri:#1f6feb; --ok:#1a7f37; --err:#c62828; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#14161a; --card:#1d2026; --txt:#e8eaed; --mut:#9aa0aa; --bd:#323741; --pri:#4c8dff; --ok:#3fb950; --err:#ff6b6b; }
+  :root {
+    --bg:#eef0f4; --bg2:#e4e7ee; --card:#ffffff; --txt:#16181d; --mut:#6b7280; --bd:#dcdfe6;
+    --input:#f7f8fa;
+    --pri:#2f6df6; --pri-l:#5b8cff; --pri-d:#1b44a8;
+    --sec:#ffffff; --sec-d:#c3c8d2; --sec-txt:#2b2f38;
+    --ok:#1a7f37; --ok-bg:#e3f6e8; --err:#c62828; --err-bg:#fdeaea;
+    --shadow:0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.08);
+    --head1:#1a1d24; --head2:#2a2f3a;
   }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--txt); }
-  main { max-width: 980px; margin: 0 auto; padding: 20px 14px 60px; }
-  h1 { font-size: 22px; margin: 0 0 16px; }
-  h2 { font-size: 17px; margin: 0 0 12px; }
-  .card { background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:16px; margin-bottom:16px; }
-  label { display:block; font-size:13px; color:var(--mut); margin-bottom:4px; }
-  input { width:100%; padding:9px 10px; border:1px solid var(--bd); border-radius:7px; background:var(--bg); color:var(--txt); font-size:14px; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:12px; }
-  button { padding:9px 16px; border:0; border-radius:7px; background:var(--pri); color:#fff; font-size:14px; cursor:pointer; }
-  button.sec { background:transparent; color:var(--txt); border:1px solid var(--bd); }
-  button:disabled { opacity:.6; cursor:wait; }
-  .msg { margin-top:12px; font-size:14px; word-break: break-all; }
-  .msg.ok { color:var(--ok); } .msg.err { color:var(--err); }
-  .topo { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:16px; }
-  .topo h1 { margin:0; }
-  .tabela { overflow-x:auto; }
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--bd); vertical-align:middle; }
-  th { font-size:12px; color:var(--mut); font-weight:600; }
-  .venc-ok { color:var(--ok); } .venc-x { color:var(--err); font-weight:600; }
-  .acoes { display:flex; gap:6px; flex-wrap:wrap; }
-  .acoes button { padding:5px 10px; font-size:13px; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0f1115; --bg2:#14171c; --card:#1a1d24; --txt:#e8eaed; --mut:#9aa0aa; --bd:#2c313b;
+      --input:#12151a;
+      --pri:#3b7bff; --pri-l:#6a97ff; --pri-d:#1a3f9c;
+      --sec:#262b34; --sec-d:#0e1014; --sec-txt:#e8eaed;
+      --ok:#3fb950; --ok-bg:#12301b; --err:#ff6b6b; --err-bg:#3a1717;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+      --head1:#0b0d10; --head2:#1a1d24;
+    }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%) fixed;
+    color:var(--txt); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- cabeçalho ---------- */
+  .header {
+    background: linear-gradient(135deg, var(--head1), var(--head2));
+    color:#fff; box-shadow:0 4px 18px rgba(0,0,0,.25);
+  }
+  .header-in {
+    max-width:1040px; margin:0 auto; padding:16px 16px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand-ico {
+    width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
+    background:linear-gradient(180deg,var(--pri-l),var(--pri)); box-shadow:0 3px 0 var(--pri-d), 0 6px 12px rgba(0,0,0,.3);
+    font-size:20px;
+  }
+  .brand h1 { font-size:18px; margin:0; font-weight:700; letter-spacing:.2px; }
+  .brand small { display:block; color:#aab1bd; font-size:12px; margin-top:2px; }
+
+  main { max-width:1040px; margin:0 auto; padding:22px 16px 70px; }
+  h2 { font-size:16px; margin:0 0 14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+
+  /* ---------- cartões ---------- */
+  .card {
+    background:var(--card); border:1px solid var(--bd); border-radius:14px;
+    padding:20px; margin-bottom:18px; box-shadow:var(--shadow);
+  }
+
+  /* ---------- formulário ---------- */
+  label { display:block; font-size:12px; font-weight:600; color:var(--mut); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px; }
+  input {
+    width:100%; padding:11px 12px; border:1px solid var(--bd); border-radius:10px;
+    background:var(--input); color:var(--txt); font-size:14px; outline:none;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,.06); transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus { border-color:var(--pri); box-shadow: inset 0 2px 3px rgba(0,0,0,.06), 0 0 0 3px rgba(47,109,246,.2); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px; }
+
+  /* ---------- botões 3D ---------- */
+  button {
+    font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; color:#fff;
+    padding:11px 22px; border:0; border-radius:10px; position:relative;
+    background:linear-gradient(180deg, var(--pri-l), var(--pri));
+    box-shadow: 0 5px 0 var(--pri-d), 0 9px 14px rgba(27,68,168,.3), inset 0 1px 0 rgba(255,255,255,.35);
+    text-shadow:0 1px 0 rgba(0,0,0,.25);
+    transition: transform .08s ease, box-shadow .08s ease, filter .15s;
+    margin-bottom:5px;
+  }
+  button:hover { filter:brightness(1.07); transform:translateY(-1px);
+    box-shadow: 0 6px 0 var(--pri-d), 0 12px 18px rgba(27,68,168,.32), inset 0 1px 0 rgba(255,255,255,.35); }
+  button:active { transform:translateY(4px);
+    box-shadow: 0 1px 0 var(--pri-d), 0 2px 4px rgba(27,68,168,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+  button:focus-visible { outline:3px solid rgba(47,109,246,.45); outline-offset:2px; }
+  button:disabled { opacity:.6; cursor:wait; transform:translateY(3px); box-shadow:0 2px 0 var(--pri-d); }
+
+  button.sec {
+    color:var(--sec-txt); text-shadow:none;
+    background:linear-gradient(180deg, var(--sec), var(--sec));
+    border:1px solid var(--bd);
+    box-shadow: 0 4px 0 var(--sec-d), 0 7px 10px rgba(16,24,40,.1), inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  button.sec:hover { box-shadow: 0 5px 0 var(--sec-d), 0 10px 14px rgba(16,24,40,.12), inset 0 1px 0 rgba(255,255,255,.5); }
+  button.sec:active { transform:translateY(3px); box-shadow: 0 1px 0 var(--sec-d), 0 2px 3px rgba(16,24,40,.1); }
+  .topo button.sec { background:linear-gradient(180deg,#3a4050,#2b303b); color:#fff; border:0;
+    box-shadow:0 4px 0 #14171d, 0 7px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.15); }
+  .topo button.sec:active { box-shadow:0 1px 0 #14171d; }
+
+  button.pequeno { padding:6px 12px; font-size:12.5px; border-radius:8px; margin-bottom:3px;
+    box-shadow: 0 3px 0 var(--sec-d), 0 5px 8px rgba(16,24,40,.1), inset 0 1px 0 rgba(255,255,255,.5); }
+  button.pequeno:hover { box-shadow: 0 4px 0 var(--sec-d), 0 7px 10px rgba(16,24,40,.12), inset 0 1px 0 rgba(255,255,255,.5); }
+  button.pequeno:active { transform:translateY(2px); box-shadow: 0 1px 0 var(--sec-d); }
+  button.pequeno.pri { color:#fff; border:0; background:linear-gradient(180deg, var(--pri-l), var(--pri)); text-shadow:0 1px 0 rgba(0,0,0,.25);
+    box-shadow: 0 3px 0 var(--pri-d), 0 5px 8px rgba(27,68,168,.25), inset 0 1px 0 rgba(255,255,255,.35); }
+  button.pequeno.pri:hover { box-shadow: 0 4px 0 var(--pri-d), 0 7px 10px rgba(27,68,168,.3), inset 0 1px 0 rgba(255,255,255,.35); }
+  button.pequeno.pri:active { box-shadow: 0 1px 0 var(--pri-d); }
+
+  /* ---------- mensagens ---------- */
+  .msg { margin-top:14px; font-size:14px; word-break:break-all; border-radius:10px; }
+  .msg:empty { display:none; }
+  .msg.ok  { color:var(--ok);  background:var(--ok-bg);  padding:10px 12px; }
+  .msg.err { color:var(--err); background:var(--err-bg); padding:10px 12px; }
+
+  /* ---------- resumo ---------- */
+  .stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:18px; }
+  .stat { background:var(--card); border:1px solid var(--bd); border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); }
+  .stat b { display:block; font-size:26px; line-height:1.1; }
+  .stat span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.4px; font-weight:600; }
+  .stat.ok b { color:var(--ok); } .stat.x b { color:var(--err); }
+
+  /* ---------- tabela ---------- */
+  .tabela { overflow-x:auto; border:1px solid var(--bd); border-radius:12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; min-width:640px; }
+  th, td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--bd); vertical-align:middle; }
+  th { font-size:11.5px; color:var(--mut); font-weight:700; text-transform:uppercase; letter-spacing:.5px; background:var(--input); }
+  tbody tr:last-child td { border-bottom:0; }
+  tbody tr:hover td { background:var(--input); }
+  .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+  .venc-ok { color:var(--ok); background:var(--ok-bg); }
+  .venc-x  { color:var(--err); background:var(--err-bg); }
+  .data { display:block; font-size:12px; color:var(--mut); margin-top:4px; }
+  .acoes { display:flex; gap:8px; flex-wrap:wrap; }
   .mut { color:var(--mut); font-size:13px; }
-  #login { max-width:380px; margin: 60px auto; }
+
+  /* ---------- login ---------- */
+  #login { max-width:400px; margin:70px auto; padding:28px; }
+  #login .brand { margin-bottom:22px; }
+  #login .brand h1 { color:var(--txt); }
+  #login .brand small { color:var(--mut); }
+  #login button { width:100%; margin-top:6px; }
   .oculto { display:none; }
+
+  @media (max-width:560px) {
+    .stats { grid-template-columns:1fr; }
+    .header-in { padding:12px; }
+  }
 </style>
 </head>
 <body>
-<main>
 
   <!-- LOGIN -->
   <section id="login" class="card">
-    <h1>Administração</h1>
-    <div style="margin-bottom:12px"><label for="lEmail">E-mail</label><input id="lEmail" type="email" autocomplete="username"></div>
-    <div style="margin-bottom:12px"><label for="lSenha">Senha</label><input id="lSenha" type="password" autocomplete="current-password"></div>
+    <div class="brand">
+      <div class="brand-ico">✂️</div>
+      <div><h1>Administração</h1><small>Acesso restrito</small></div>
+    </div>
+    <div style="margin-bottom:16px"><label for="lEmail">E-mail</label><input id="lEmail" type="email" autocomplete="username"></div>
+    <div style="margin-bottom:16px"><label for="lSenha">Senha</label><input id="lSenha" type="password" autocomplete="current-password"></div>
     <button id="btnEntrar">Entrar</button>
     <div id="lMsg" class="msg err"></div>
   </section>
 
   <!-- PAINEL -->
   <section id="painel" class="oculto">
-    <div class="topo">
-      <h1>Barbearias</h1>
-      <button class="sec" id="btnSair">Sair</button>
-    </div>
-
-    <div class="card">
-      <h2>Cadastrar nova barbearia</h2>
-      <div class="grid">
-        <div><label for="cNome">Nome da barbearia</label><input id="cNome" maxlength="80"></div>
-        <div><label for="cEmail">E-mail de login</label><input id="cEmail" type="email"></div>
-        <div><label for="cSenha">Senha (mín. 6)</label><input id="cSenha" type="text" autocomplete="off"></div>
-        <div><label for="cLogo">Link do logo (https, opcional)</label><input id="cLogo" type="url" placeholder="https://..."></div>
-        <div><label for="cDias">Dias de teste</label><input id="cDias" type="number" min="0" max="365" value="7"></div>
+    <header class="header">
+      <div class="header-in topo">
+        <div class="brand">
+          <div class="brand-ico">✂️</div>
+          <div><h1>Barbearias</h1><small>Painel de administração</small></div>
+        </div>
+        <button class="sec" id="btnSair">Sair</button>
       </div>
-      <div style="margin-top:14px"><button id="btnCadastrar">Cadastrar</button></div>
-      <div id="cMsg" class="msg"></div>
-    </div>
+    </header>
 
-    <div class="card">
-      <h2>Barbearias cadastradas</h2>
-      <div class="tabela">
-        <table>
-          <thead><tr><th>Nome</th><th>E-mail</th><th>Vencimento</th><th>Link</th><th></th></tr></thead>
-          <tbody id="lista"><tr><td colspan="5" class="mut">Carregando…</td></tr></tbody>
-        </table>
+    <main>
+      <div class="stats">
+        <div class="stat"><b id="stTotal">0</b><span>Cadastradas</span></div>
+        <div class="stat ok"><b id="stAtivas">0</b><span>Em dia</span></div>
+        <div class="stat x"><b id="stVencidas">0</b><span>Vencidas</span></div>
       </div>
-      <div id="lMsg2" class="msg"></div>
-    </div>
+
+      <div class="card">
+        <h2>➕ Cadastrar nova barbearia</h2>
+        <div class="grid">
+          <div><label for="cNome">Nome da barbearia</label><input id="cNome" maxlength="80"></div>
+          <div><label for="cEmail">E-mail de login</label><input id="cEmail" type="email"></div>
+          <div><label for="cSenha">Senha (mín. 6)</label><input id="cSenha" type="text" autocomplete="off"></div>
+          <div><label for="cLogo">Link do logo (https, opcional)</label><input id="cLogo" type="url" placeholder="https://..."></div>
+          <div><label for="cDias">Dias de teste</label><input id="cDias" type="number" min="0" max="365" value="7"></div>
+        </div>
+        <div style="margin-top:18px"><button id="btnCadastrar">Cadastrar</button></div>
+        <div id="cMsg" class="msg"></div>
+      </div>
+
+      <div class="card">
+        <h2>💈 Barbearias cadastradas</h2>
+        <div class="tabela">
+          <table>
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Vencimento</th><th>Link</th><th></th></tr></thead>
+            <tbody id="lista"><tr><td colspan="5" class="mut">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+        <div id="lMsg2" class="msg"></div>
+      </div>
+    </main>
   </section>
-
-</main>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -143,21 +267,31 @@ auth.onAuthStateChanged(async (u) => {
 // ---------- lista ----------
 function hoje() { return new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); }
 
+function dataBR(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : '—';
+}
+
 async function carregar() {
   const { barbearias } = await chamar('GET');
   const tb = $('lista');
-  if (!barbearias.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">Nenhuma barbearia cadastrada.</td></tr>'; return; }
   const h = hoje();
+  const vencidasN = barbearias.filter((b) => !b.vencimento || b.vencimento < h).length;
+  $('stTotal').textContent = barbearias.length;
+  $('stVencidas').textContent = vencidasN;
+  $('stAtivas').textContent = barbearias.length - vencidasN;
+
+  if (!barbearias.length) { tb.innerHTML = '<tr><td colspan="5" class="mut">Nenhuma barbearia cadastrada.</td></tr>'; return; }
   tb.innerHTML = barbearias.map((b) => {
     const vencida = !b.vencimento || b.vencimento < h;
     const link = b.slug ? location.origin + '/agenda.html?b=' + b.slug : '';
     return `<tr data-id="${esc(b.id)}">
-      <td>${esc(b.nome)}</td>
+      <td><strong>${esc(b.nome)}</strong></td>
       <td>${esc(b.email)}</td>
-      <td class="${vencida ? 'venc-x' : 'venc-ok'}">${esc(b.vencimento || '—')}${vencida ? ' (vencida)' : ''}</td>
-      <td>${link ? `<button class="sec copiar" data-link="${esc(link)}" style="padding:4px 9px;font-size:12px">Copiar</button>` : '<span class="mut">sem slug</span>'}</td>
+      <td><span class="badge ${vencida ? 'venc-x' : 'venc-ok'}">${vencida ? 'Vencida' : 'Em dia'}</span><span class="data">${esc(dataBR(b.vencimento))}</span></td>
+      <td>${link ? `<button class="sec pequeno copiar" data-link="${esc(link)}">Copiar</button>` : '<span class="mut">sem slug</span>'}</td>
       <td class="acoes">
-        <button class="sec editar">Editar</button>
+        <button class="pequeno pri editar">Editar</button>
       </td>
     </tr>`;
   }).join('');
