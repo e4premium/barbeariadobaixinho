@@ -2,7 +2,6 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>E4 PREMIUM - GESTAO</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💈</text></svg>">
 <style>
 :root{--bg:#e3e8ef;--card:#fff;--ink:#14213d;--mut:#5c6678;--line:#d5dae2;--red:#c8102e;--ok:#1b7f4b;--edge:#aeb8c9;--pe:#070d1c}
 @media (prefers-color-scheme:dark){:root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}}
@@ -348,8 +347,30 @@ cad(){
  ${S.barbers.map(b=>`<div class="it"><div class="g">${esc(b.name)}</div><label class="mut">Comissão <input type="number" min="0" max="100" value="${b.pct}" style="width:70px" onchange="setPct('${b.id}',this.value)">%</label>
  <button class="x" onclick="del('barbers','${b.id}')">Excluir</button></div>`).join('')}</div>
  <div class="card"><h2>Serviços</h2><div class="row"><input id="sn" placeholder="Serviço"><input id="sp" type="number" min="0" step="0.01" placeholder="Preço" style="width:110px"><button class="pri" onclick="addService()">Adicionar</button></div>
- ${S.services.map(s=>`<div class="it"><div class="g">${esc(s.name)}</div><b>${brl(s.price)}</b><button class="x" onclick="del('services','${s.id}')">Excluir</button></div>`).join('')}</div>`}
+ ${S.services.map(s=>`<div class="it"><div class="g">${esc(s.name)}</div><b>${brl(s.price)}</b><button class="x" onclick="del('services','${s.id}')">Excluir</button></div>`).join('')}</div>${cardHorarios()}`}
 };
+
+// Horários que o cliente vê no link de agendamento (cada barbearia tem os seus).
+// Sem nada salvo, vale o padrão abaixo (igual ao do servidor).
+const HOR_PADRAO={semana:{a:'09:00',b:'12:00',c:'15:00',d:'19:30'},sabado:{a:'09:00',b:'13:30',c:'15:00',d:'20:30'},domingo:{a:'10:00',b:'13:30',c:'',d:''}};
+const HOR_NOMES={semana:'Segunda a sexta',sabado:'Sábado',domingo:'Domingo'};
+const horDe=k=>Object.assign({},HOR_PADRAO[k],(S.horarios&&S.horarios[k])||{});
+
+function cardHorarios(){
+ return `<div class="card"><h2>Horários de atendimento</h2>
+ <p class="mut">São os horários (de 30 em 30 minutos) que o cliente vê no link de agendamento. Apague a faixa da tarde se não abre à tarde; apague tudo para fechar o dia.</p>
+ ${Object.keys(HOR_NOMES).map(k=>{const h=horDe(k);return `<div class="it"><div class="g"><b>${HOR_NOMES[k]}</b></div>
+ <label class="mut">Manhã <input type="time" step="1800" value="${h.a}" onchange="setHor('${k}','a',this.value)"> até <input type="time" step="1800" value="${h.b}" onchange="setHor('${k}','b',this.value)"></label>
+ <label class="mut">Tarde <input type="time" step="1800" value="${h.c}" onchange="setHor('${k}','c',this.value)"> até <input type="time" step="1800" value="${h.d}" onchange="setHor('${k}','d',this.value)"></label></div>`}).join('')}</div>`;
+}
+
+function setHor(k,campo,val){
+ const g=horDe(k);g[campo]=val;
+ if((g.a&&g.b&&g.b<g.a)||(g.c&&g.d&&g.d<g.c)){alert('O horário final precisa ser depois do inicial.');render();return}
+ if(!S.horarios)S.horarios={};
+ S.horarios[k]=g;
+ save();
+}
 
 function render(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
