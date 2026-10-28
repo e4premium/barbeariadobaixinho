@@ -33,19 +33,42 @@ async function agendaPublica(req, env, url, cors) {
     logo: cfg.logo || '',
     barbers: (S.barbers || []).map((b) => ({ id: b.id, name: b.name })),
     services: (S.services || []).map((s) => ({ id: s.id, name: s.name, price: s.price })),
+    horarios: horariosDaBarbearia(S.horarios),
   }, cors);
 }
 
 // =====================================================================
 // agendar: grava o agendamento (valida tudo; o cliente nunca acessa o banco)
 // =====================================================================
-function horariosDoDia(iso) {
+// Horários de cada barbearia ficam em dados/principal -> horarios (o dono edita em Cadastros).
+// Cada tipo de dia tem duas faixas (manhã a–b, tarde c–d), de 30 em 30 minutos.
+// Barbearia sem "horarios" salvos usa o padrão abaixo (o mesmo de antes).
+const PADRAO_HORARIOS = {
+  semana:  { a: '09:00', b: '12:00', c: '15:00', d: '19:30' },
+  sabado:  { a: '09:00', b: '13:30', c: '15:00', d: '20:30' },
+  domingo: { a: '10:00', b: '13:30', c: '',      d: ''      },
+};
+const reHora = /^([01]\d|2[0-3]):[0-5]\d$/;
+const emMinutos = (h) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3));
+const deMinutos = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+function faixaDeHorarios(ini, fim) {
+  if (!reHora.test(String(ini || '')) || !reHora.test(String(fim || ''))) return [];
+  const out = [];
+  for (let m = emMinutos(ini); m <= emMinutos(fim); m += 30) out.push(deMinutos(m));
+  return out;
+}
+function horariosDaBarbearia(H) {
+  const r = {};
+  for (const k of Object.keys(PADRAO_HORARIOS)) {
+    const g = H && typeof H[k] === 'object' && H[k] ? H[k] : PADRAO_HORARIOS[k];
+    r[k] = [...new Set([...faixaDeHorarios(g.a, g.b), ...faixaDeHorarios(g.c, g.d)])].sort();
+  }
+  return r;
+}
+function horariosDoDia(iso, H) {
   const dow = new Date(iso + 'T00:00:00Z').getUTCDay();
-  if (dow === 0) return ['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30'];
-  if (dow === 6) return ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30',
-    '15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30'];
-  return ['09:00','09:30','10:00','10:30','11:00','11:30','12:00',
-    '15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
+  const l = horariosDaBarbearia(H);
+  return dow === 0 ? l.domingo : dow === 6 ? l.sabado : l.semana;
 }
 const novoId = () =>
   [...crypto.getRandomValues(new Uint8Array(4))].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 7);
@@ -73,7 +96,6 @@ async function agendar(req, env, url, cors) {
   if (!dataReal || data < hoje || data > limite) {
     return resp(400, { error: 'Escolha uma data a partir de hoje (até 90 dias).' }, cors);
   }
-  if (!horariosDoDia(data).includes(hora)) return resp(400, { error: 'Horário inválido para este dia.' }, cors);
 
   const fs = firestore(env);
   const snap = await acharBarbearia(fs, slug);
@@ -90,6 +112,7 @@ async function agendar(req, env, url, cors) {
     const barb = (S.barbers || []).find((x) => x.id === barberId);
     const serv = (S.services || []).find((x) => x.id === servId);
     if (!barb || !serv) return { status: 400, error: 'Barbeiro ou serviço inválido.' };
+    if (!horariosDoDia(data, S.horarios).includes(hora)) return { status: 400, error: 'Horário inválido para este dia.' };
 
     if (S.appts.some((a) => a.date === data && a.time === hora && a.bid === barberId && a.status === 'agendado')) {
       return { status: 409, error: `O horário ${hora} já está ocupado para este barbeiro. Escolha outro.` };
