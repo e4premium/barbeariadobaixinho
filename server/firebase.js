@@ -134,6 +134,8 @@ export function firestore(env) {
     // set = substitui o documento inteiro; update = mexe só nos campos informados
     set: async (path, data) => exigir(await commit([escrita(path, data)]), 'set'),
     update: async (path, data) => exigir(await commit([escrita(path, data, Object.keys(data))]), 'update'),
+    // apaga um documento (não apaga as subcoleções dele; apague-as antes, pelo caminho)
+    apagar: async (path) => exigir(await commit([{ delete: `${raiz}/${path}` }]), 'apagar'),
 
     // Transação com tentativas (se outra gravação mexer no mesmo documento, repete)
     async transaction(fn) {
