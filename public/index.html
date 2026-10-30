@@ -146,26 +146,57 @@ function aplicarMarca(c){
   } else { img.hidden = true; pole.style.display = ''; }
 }
 
-// Função para falar em voz alta (Voz feminina)
+// Toque de alerta (gerado pelo navegador, sem arquivo de som)
+let _audioCtx = null;
+function prepararAudio() {
+  try {
+    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  } catch (e) {}
+}
+function tocarAlerta() {
+  return new Promise((resolve) => {
+    // Sem permissão de áudio ainda: pula o toque e a voz continua normalmente
+    if (!_audioCtx || _audioCtx.state !== 'running') return resolve();
+    try {
+      const t0 = _audioCtx.currentTime;
+      [[880, 0], [1175, 0.22], [880, 0.44]].forEach(([freq, atraso]) => {
+        const osc = _audioCtx.createOscillator();
+        const vol = _audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        vol.gain.setValueAtTime(0.0001, t0 + atraso);
+        vol.gain.exponentialRampToValueAtTime(0.5, t0 + atraso + 0.02);
+        vol.gain.exponentialRampToValueAtTime(0.0001, t0 + atraso + 0.35);
+        osc.connect(vol).connect(_audioCtx.destination);
+        osc.start(t0 + atraso);
+        osc.stop(t0 + atraso + 0.4);
+      });
+      setTimeout(resolve, 900);
+    } catch (e) { resolve(); }
+  });
+}
+
+// Função para falar em voz alta (Voz feminina), depois do toque
 function falarNotificacao(texto) {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(texto);
-    utterance.lang = 'pt-BR';
-    utterance.rate = 1.0; 
-    utterance.pitch = 1.2;
+  tocarAlerta().then(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.2;
 
-    const vozes = window.speechSynthesis.getVoices();
-    const vozFeminina = vozes.find(v => 
-      v.lang.includes('pt') && 
-      (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Google') || v.name.includes('Francisca') || v.name.includes('Female'))
-    );
-    if (vozFeminina) {
-      utterance.voice = vozFeminina;
+      const vozes = window.speechSynthesis.getVoices();
+      const vozFeminina = vozes.find(v =>
+        v.lang.includes('pt') &&
+        (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Google') || v.name.includes('Francisca') || v.name.includes('Female'))
+      );
+      if (vozFeminina) utterance.voice = vozFeminina;
+
+      window.speechSynthesis.speak(utterance);
     }
-
-    window.speechSynthesis.speak(utterance);
-  }
+  });
 }
 
 async function loadFromFirebase(){
@@ -379,6 +410,7 @@ function render(){
 }
 
 document.addEventListener("click", e => {
+  prepararAudio();
   if ('speechSynthesis' in window && window.speechSynthesis.paused) {
     window.speechSynthesis.resume();
   }
