@@ -357,6 +357,23 @@ async function adminBarbearias(req, env, url, cors) {
     if (b.senha) await auth.senha(id, String(b.senha));
     return resp(200, { ok: true }, cors);
   }
+  if (b.acao === 'excluir') {
+    const id = String(b.id || '');
+    if (!id) return resp(400, { erro: 'Barbearia não informada.' }, cors);
+    if (id === quem.uid) return resp(400, { erro: 'Não é possível excluir a própria conta de administração.' }, cors);
+    if (!(await fs.get(`barbearias/${id}`))) return resp(404, { erro: 'Barbearia não encontrada.' }, cors);
+
+    // Primeiro os dados (agenda, clientes, caixa...), depois o cadastro, por último o login.
+    // O cadastro sai antes do login para o link de agendamento parar de funcionar na hora.
+    await fs.apagar(PRINCIPAL(id));
+    await fs.apagar(`barbearias/${id}`);
+    const u = await auth.apagar(id);
+    const m = (u.data && u.data.error && u.data.error.message) || '';
+    if (!u.ok && !m.startsWith('USER_NOT_FOUND')) {
+      return resp(500, { erro: 'Os dados foram apagados, mas não foi possível remover o login: ' + m }, cors);
+    }
+    return resp(200, { ok: true }, cors);
+  }
   return resp(400, { erro: 'Ação desconhecida.' }, cors);
 }
 
