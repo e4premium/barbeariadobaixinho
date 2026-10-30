@@ -2,7 +2,6 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>E4 PREMIUM - GESTAO</title>
-<link rel="icon" type="image/png" href="https://marketplace.canva.com/juAHY/MAGfkPjuAHY/1/tl/canva-%C3%ADcone-de-calend%C3%A1rio-e-rel%C3%B3gio-MAGfkPjuAHY.png">
 <style>
 :root{--bg:#e3e8ef;--card:#fff;--ink:#14213d;--mut:#5c6678;--line:#d5dae2;--red:#c8102e;--ok:#1b7f4b;--edge:#aeb8c9;--pe:#070d1c}
 @media (prefers-color-scheme:dark){:root{--bg:#0b1221;--card:#18223a;--ink:#e8ecf4;--mut:#9aa5bb;--line:#2b3753;--red:#ff4d63;--ok:#4cc38a;--edge:#080d19;--pe:#7f8aa3}}
@@ -146,56 +145,43 @@ function aplicarMarca(c){
   } else { img.hidden = true; pole.style.display = ''; }
 }
 
-// Toque de alerta (gerado pelo navegador, sem arquivo de som)
-let _audioCtx = null;
-function prepararAudio() {
-  try {
-    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (_audioCtx.state === 'suspended') _audioCtx.resume();
-  } catch (e) {}
-}
-function tocarAlerta() {
-  return new Promise((resolve) => {
-    // Sem permissão de áudio ainda: pula o toque e a voz continua normalmente
-    if (!_audioCtx || _audioCtx.state !== 'running') return resolve();
-    try {
-      const t0 = _audioCtx.currentTime;
-      [[880, 0], [1175, 0.22], [880, 0.44]].forEach(([freq, atraso]) => {
-        const osc = _audioCtx.createOscillator();
-        const vol = _audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        vol.gain.setValueAtTime(0.0001, t0 + atraso);
-        vol.gain.exponentialRampToValueAtTime(0.5, t0 + atraso + 0.02);
-        vol.gain.exponentialRampToValueAtTime(0.0001, t0 + atraso + 0.35);
-        osc.connect(vol).connect(_audioCtx.destination);
-        osc.start(t0 + atraso);
-        osc.stop(t0 + atraso + 0.4);
-      });
-      setTimeout(resolve, 900);
-    } catch (e) { resolve(); }
-  });
-}
-
-// Função para falar em voz alta (Voz feminina), depois do toque
+// Função para falar em voz alta (Voz feminina)
 function falarNotificacao(texto) {
-  tocarAlerta().then(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(texto);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.2;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(texto);
+    utterance.lang = 'pt-BR';
+    utterance.rate = 1.0; 
+    utterance.pitch = 1.2;
 
-      const vozes = window.speechSynthesis.getVoices();
-      const vozFeminina = vozes.find(v =>
-        v.lang.includes('pt') &&
-        (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Google') || v.name.includes('Francisca') || v.name.includes('Female'))
-      );
-      if (vozFeminina) utterance.voice = vozFeminina;
-
-      window.speechSynthesis.speak(utterance);
+    const vozes = window.speechSynthesis.getVoices();
+    const vozFeminina = vozes.find(v => 
+      v.lang.includes('pt') && 
+      (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Google') || v.name.includes('Francisca') || v.name.includes('Female'))
+    );
+    if (vozFeminina) {
+      utterance.voice = vozFeminina;
     }
+
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+// Conta sem permissão ou que não existe mais (ex.: barbearia excluída com a sessão ainda aberta):
+// sai da sessão e volta para a tela de login, em vez de ficar com a tela em branco.
+let saindo = false;
+function falhaLeitura(err){
+  console.error("Erro ao ler dados:", err);
+  if (saindo) return;
+  saindo = true;
+  const semAcesso = err && (err.code === 'permission-denied' || err.code === 'unauthenticated');
+  const texto = semAcesso
+    ? 'Esta conta não está mais ativa. Entre com outra conta ou fale com o administrador.'
+    : 'Não foi possível carregar os dados. Recarregue a página.';
+  auth.signOut().finally(() => {
+    saindo = false;
+    lockUI();
+    setTimeout(() => { const e = $('#pe'); if (e) e.textContent = texto; }, 200);
   });
 }
 
@@ -231,25 +217,26 @@ async function loadFromFirebase(){
         
         verificarVencimento();
       } else {
-        S = {
-          barbers:[{id:'b1',name:'Carlos',pct:50},{id:'b2',name:'Diego',pct:40}],
-          services:[{id:'s1',name:'Corte',price:40},{id:'s2',name:'Barba',price:30},{id:'s3',name:'Corte + barba',price:65},{id:'s4',name:'Sobrancelha',price:15}],
-          appts:[],tx:[],stock:[{id:'p1',name:'Pomada modeladora',qty:8,min:3},{id:'p2',name:'Óleo para barba',qty:2,min:3}],
-          clients:[]
-        };
-        save();
+        // Só cria os dados de exemplo se a barbearia ainda existe (evita recriar dados de uma conta excluída)
+        db.collection("barbearias").doc(BID).get().then((b) => {
+          if (!b.exists) return falhaLeitura({ code: 'permission-denied' });
+          S = {
+            barbers:[{id:'b1',name:'Carlos',pct:50},{id:'b2',name:'Diego',pct:40}],
+            services:[{id:'s1',name:'Corte',price:40},{id:'s2',name:'Barba',price:30},{id:'s3',name:'Corte + barba',price:65},{id:'s4',name:'Sobrancelha',price:15}],
+            appts:[],tx:[],stock:[{id:'p1',name:'Pomada modeladora',qty:8,min:3},{id:'p2',name:'Óleo para barba',qty:2,min:3}],
+            clients:[]
+          };
+          save();
+        }).catch(falhaLeitura);
       }
-    });
+    }, falhaLeitura);
     // Vencimento: quando o servidor soma 1 mês após o pagamento, a tela libera sozinha
     db.collection("barbearias").doc(BID).onSnapshot((snap) => {
       aplicarMarca(snap.exists ? snap.data() : {});
       VENC = (snap.exists && snap.data().vencimento) ? snap.data().vencimento : null;
       assinOk = true;
       verificarVencimento();
-    }, (err) => {
-      console.error("Erro ao ler assinatura:", err);
-      $('#lock').innerHTML = '<div class="card"><p class="out">Não foi possível verificar a assinatura. Recarregue a página.</p></div>';
-    });
+    }, falhaLeitura);
   } catch(e) {
     console.error("Erro ao carregar do Firebase:", e);
   }
@@ -265,7 +252,7 @@ async function save(){
 
 // Endereço da função que gera a cobrança (troque pelo seu site do Netlify)
 const API_MENSALIDADE = "/.netlify/functions/criar-cobranca";
-const VALOR_MENSALIDADE_TXT = "R$ 70,00"; // só para exibir; o valor real está na variável VALOR_CENTAVOS do servidor
+const VALOR_MENSALIDADE_TXT = "R$ 5,00"; // só para exibir; o valor real está na variável VALOR_CENTAVOS do servidor
 
 // Verificar se o sistema venceu (precisa dos dados e do vencimento carregados)
 function verificarVencimento(){
@@ -410,7 +397,6 @@ function render(){
 }
 
 document.addEventListener("click", e => {
-  prepararAudio();
   if ('speechSynthesis' in window && window.speechSynthesis.paused) {
     window.speechSynthesis.resume();
   }
