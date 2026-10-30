@@ -293,6 +293,7 @@ async function carregar() {
       <td>${link ? `<button class="sec pequeno copiar" data-link="${esc(link)}">Copiar</button>` : '<span class="mut">sem slug</span>'}</td>
       <td class="acoes">
         <button class="pequeno pri editar">Editar</button>
+        <button class="pequeno sec excluir" style="color:var(--err)">Excluir</button>
       </td>
     </tr>`;
   }).join('');
@@ -310,6 +311,28 @@ async function carregar() {
       editar(barbearias.find((x) => x.id === id));
     };
   });
+  tb.querySelectorAll('.excluir').forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.closest('tr').dataset.id;
+      excluir(barbearias.find((x) => x.id === id));
+    };
+  });
+}
+
+// Exclusão definitiva: pede para digitar o nome da barbearia antes de apagar
+async function excluir(b) {
+  const digitado = prompt(
+    'ATENÇÃO: isto apaga para sempre a barbearia "' + b.nome + '" (' + b.email + '): ' +
+    'agenda, clientes, caixa, estoque e o login. Não tem como desfazer.\n\n' +
+    'Para confirmar, digite o nome da barbearia exatamente como está:'
+  );
+  if (digitado === null) return;
+  if (digitado.trim() !== String(b.nome).trim()) { msg($('lMsg2'), 'Nome diferente. Nada foi apagado.'); return; }
+  try {
+    await chamar('POST', { acao: 'excluir', id: b.id });
+    msg($('lMsg2'), 'Barbearia "' + b.nome + '" excluída.', true);
+    await carregar();
+  } catch (e) { msg($('lMsg2'), e.message); }
 }
 
 // Edição simples por caixas de diálogo
