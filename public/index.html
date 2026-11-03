@@ -55,6 +55,15 @@ td.n,th.n{text-align:right}
 .in{color:var(--ok)}.out{color:var(--red)}
 #lock,#paywall{max-width:420px;margin:60px auto;padding:0 14px}
 
+/* Botão de WhatsApp no final do site */
+.wa-foot{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 14px 44px;text-align:center}
+.wa-foot p{margin:0;color:var(--mut);font-size:14px}
+.wa-foot a{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:240px;padding:16px 34px;background:#25d366;color:#fff;font-size:18px;font-weight:700;text-decoration:none;border-radius:999px;box-shadow:0 0 22px rgba(37,211,102,.35),0 6px 14px rgba(0,0,0,.3);transition:transform .12s,box-shadow .12s}
+.wa-foot a:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(37,211,102,.5),0 8px 18px rgba(0,0,0,.35)}
+.wa-foot a:active{transform:translateY(1px)}
+.wa-foot a:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.wa-foot svg{width:30px;height:30px;fill:#fff;flex-shrink:0}
+
 /* Banner de Notificação Visual */
 #notif-banner {
   position: fixed;
@@ -120,6 +129,7 @@ main{padding:16px 12px}
 <nav><button data-t="agenda">Agenda</button><button data-t="cli">Clientes</button><button data-t="caixa">Caixa</button><button data-t="com">Comissões</button><button data-t="estoque">Estoque</button><button data-t="cad">Cadastros</button></nav>
 <button id="lg" onclick="logout()">Sair</button></aside>
 <main></main></div>
+<div class="wa-foot"><p>Dúvidas, suporte ou quer contratar? Fale com a gente:</p><a href="https://wa.me/5596991998013?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20o%20sistema." target="_blank" rel="noopener"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16.04 3C9.4 3 4 8.38 4 15.01c0 2.12.55 4.18 1.6 6L4 29l8.2-1.56a12 12 0 0 0 3.84.62C22.68 28.06 28 22.66 28 16.03 28 9.4 22.68 3 16.04 3zm0 22.04c-1.2 0-2.38-.2-3.5-.6l-.5-.18-4.86.92.96-4.74-.2-.52a9.9 9.9 0 0 1-1.5-5.2c0-5.5 4.5-9.97 10.06-9.97 5.5 0 9.96 4.46 9.96 9.97s-4.46 10.32-9.96 10.32zm5.46-7.46c-.3-.15-1.78-.88-2.06-.98-.28-.1-.48-.15-.68.15-.2.3-.78.98-.96 1.18-.18.2-.35.22-.65.08-.3-.15-1.28-.47-2.44-1.5-.9-.8-1.5-1.8-1.68-2.1-.18-.3-.02-.46.13-.6.14-.13.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.68-1.64-.93-2.25-.24-.58-.5-.5-.68-.5h-.58c-.2 0-.53.08-.8.38-.28.3-1.05 1.03-1.05 2.5s1.08 2.9 1.23 3.1c.15.2 2.1 3.2 5.1 4.5.72.3 1.28.5 1.7.64.72.22 1.37.2 1.88.12.58-.08 1.78-.73 2.03-1.43.25-.7.25-1.3.18-1.43-.08-.12-.28-.2-.58-.35z"/></svg>Fale com a gente</a></div>
 <script>
 const $=s=>document.querySelector(s),v=id=>document.getElementById(id).value;
 const uid=()=>Math.random().toString(36).slice(2,9);
