@@ -344,7 +344,7 @@ const monthPick=()=>`<div class="row"><label>Mês <input type="month" value="${m
 
 const V={
 agenda(){
- if(!S.barbers.length||!S.services.length)return `<div class="card"><p>Cadastre ao menos um barbeiro e um serviço em Cadastros para agendar.</p></div>`;
+ if(!S.barbers.length||!S.services.length)return `<div class="card"><p>Cadastre ao menos um profissional e um serviço em Cadastros para agendar.</p></div>`;
  const l=S.appts.filter(a=>a.date===day).sort((a,b)=>a.time.localeCompare(b.time));
  return `<div class="row"><label>Dia <input type="date" value="${day}" onchange="day=this.value||day;render()"></label></div>
  <div class="card"><h2>Novo agendamento</h2><div class="row">
@@ -376,8 +376,8 @@ com(){
  const t=monthTx().filter(x=>x.type==='in'&&x.bid);let tot=0;
  const rows=S.barbers.map(b=>{const m=t.filter(x=>x.bid===b.id),f=m.reduce((s,x)=>s+x.val,0),c=f*b.pct/100;tot+=c;
  return `<tr><td>${esc(b.name)}</td><td class="n">${m.length}</td><td class="n">${brl(f)}</td><td class="n">${b.pct}%</td><td class="n"><b>${brl(c)}</b></td></tr>`}).join('');
- return `${monthPick()}<div class="card"><h2>Comissões do mês</h2>${S.barbers.length?`<table><tr><th>Barbeiro</th><th class="n">Atend.</th><th class="n">Faturado</th><th class="n">Taxa</th><th class="n">A pagar</th></tr>${rows}</table>
- <p>Total a pagar: <b>${brl(tot)}</b></p><p class="mut">A taxa de cada barbeiro é definida em Cadastros.</p>`:'<p class="mut">Nenhum barbeiro cadastrado.</p>'}</div>`},
+ return `${monthPick()}<div class="card"><h2>Comissões do mês</h2>${S.barbers.length?`<table><tr><th>Profissional</th><th class="n">Atend.</th><th class="n">Faturado</th><th class="n">Taxa</th><th class="n">A pagar</th></tr>${rows}</table>
+ <p>Total a pagar: <b>${brl(tot)}</b></p><p class="mut">A taxa de cada profissional é definida em Cadastros.</p>`:'<p class="mut">Nenhum profissionalcadastrado.</p>'}</div>`},
 estoque(){
  return `<div class="card"><h2>Novo produto</h2><div class="row"><input id="pn" placeholder="Produto"><input id="pq" type="number" min="0" placeholder="Qtd." style="width:90px"><input id="pm" type="number" min="0" placeholder="Mínimo" style="width:90px">
  <button class="pri" onclick="addStock()">Adicionar</button></div></div>
@@ -385,7 +385,7 @@ estoque(){
  ${p.qty<=p.min?'<span class="tag low">Repor</span>':''}<button onclick="adj('${p.id}',-1)" aria-label="Diminuir">−</button><b>${p.qty}</b><button onclick="adj('${p.id}',1)" aria-label="Aumentar">+</button>
  <button class="x" onclick="del('stock','${p.id}')">Excluir</button></div>`).join(''):'<p class="mut">Nenhum produto. Adicione o primeiro acima.</p>'}</div>`},
 cad(){
- return `<div class="card"><h2>Barbeiros</h2><div class="row"><input id="bn" placeholder="Nome"><input id="bp" type="number" min="0" max="100" placeholder="Comissão %" style="width:120px"><button class="pri" onclick="addBarber()">Adicionar</button></div>
+ return `<div class="card"><h2>Profissionais</h2><div class="row"><input id="bn" placeholder="Nome"><input id="bp" type="number" min="0" max="100" placeholder="Comissão %" style="width:120px"><button class="pri" onclick="addBarber()">Adicionar</button></div>
  ${S.barbers.map(b=>`<div class="it"><div class="g">${esc(b.name)}</div><label class="mut">Comissão <input type="number" min="0" max="100" value="${b.pct}" style="width:70px" onchange="setPct('${b.id}',this.value)">%</label>
  <button class="x" onclick="del('barbers','${b.id}')">Excluir</button></div>`).join('')}</div>
  <div class="card"><h2>Serviços</h2><div class="row"><input id="sn" placeholder="Serviço"><input id="sp" type="number" min="0" step="0.01" placeholder="Preço" style="width:110px"><button class="pri" onclick="addService()">Adicionar</button></div>
@@ -443,7 +443,7 @@ function addAppt(){
  
  const ocupado = S.appts.some(a => a.date === day && a.time === timeVal && a.bid === barberId && a.status === 'agendado');
  if(ocupado){
-   alert('Este barbeiro já possui um agendamento marcado para este horário!');
+   alert('Este Profissional já possui um agendamento marcado para este horário!');
    return;
  }
 
@@ -500,7 +500,7 @@ function addStock(){
 function adj(id,d){const p=S.stock.find(x=>x.id===id);p.qty=Math.max(0,p.qty+d); render(); save();}
 
 function addBarber(){
- const n=v('bn').trim();if(!n){alert('Informe o nome do barbeiro.');return}
+ const n=v('bn').trim();if(!n){alert('Informe o nome do profissional.');return}
  S.barbers.push({id:uid(),name:n,pct:Math.min(100,+v('bp')||0)});
  render(); save();
 }
