@@ -268,7 +268,11 @@ const gerarSlug = (nome) =>
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'barbearia';
 const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const reData = /^\d{4}-\d{2}-\d{2}$/;
-const logoOk = (l) => l === '' || /^https:\/\//i.test(l);
+// Aceita link https:// ou imagem enviada da galeria (data URL, até ~110 KB)
+const logoOk = (l) =>
+  l === '' ||
+  /^https:\/\//i.test(l) ||
+  (/^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(l) && l.length <= 150000);
 
 async function adminBarbearias(req, env, url, cors) {
   const adminEmail = String(env.ADMIN_EMAIL || '').trim().toLowerCase();
@@ -303,7 +307,7 @@ async function adminBarbearias(req, env, url, cors) {
     if (!nome || nome.length > 80) return resp(400, { erro: 'Informe o nome (até 80 caracteres).' }, cors);
     if (!reEmail.test(email)) return resp(400, { erro: 'E-mail inválido.' }, cors);
     if (senha.length < 6) return resp(400, { erro: 'A senha precisa ter pelo menos 6 caracteres.' }, cors);
-    if (!logoOk(logo)) return resp(400, { erro: 'O logo precisa ser um link que comece com https://' }, cors);
+    if (!logoOk(logo)) return resp(400, { erro: 'Logo inválido: use uma imagem da galeria ou um link https://' }, cors);
     if (!Number.isInteger(dias) || dias < 0 || dias > 365) {
       return resp(400, { erro: 'Dias de teste deve ser um número de 0 a 365.' }, cors);
     }
@@ -343,7 +347,7 @@ async function adminBarbearias(req, env, url, cors) {
     }
     if (b.logo !== undefined) {
       const logo = String(b.logo).trim();
-      if (!logoOk(logo)) return resp(400, { erro: 'O logo precisa começar com https://' }, cors);
+      if (!logoOk(logo)) return resp(400, { erro: 'Logo inválido: use uma imagem da galeria ou um link https://' }, cors);
       campos.logo = logo;
     }
     if (b.vencimento !== undefined) {
