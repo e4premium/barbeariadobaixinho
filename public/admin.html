@@ -187,9 +187,9 @@
       </div>
 
       <div class="card">
-        <h2>➕ Cadastrar nova barbearia</h2>
+        <h2>➕ Cadastrar nova empresa</h2>
         <div class="grid">
-          <div><label for="cNome">Nome da barbearia</label><input id="cNome" maxlength="80"></div>
+          <div><label for="cNome">Nome da empresa</label><input id="cNome" maxlength="80"></div>
           <div><label for="cEmail">E-mail de login</label><input id="cEmail" type="email"></div>
           <div><label for="cSenha">Senha (mín. 6)</label><input id="cSenha" type="text" autocomplete="off"></div>
           <div>
@@ -350,7 +350,7 @@ async function excluir(b) {
   const digitado = prompt(
     'ATENÇÃO: isto apaga para sempre a barbearia "' + b.nome + '" (' + b.email + '): ' +
     'agenda, clientes, caixa, estoque e o login. Não tem como desfazer.\n\n' +
-    'Para confirmar, digite o nome da barbearia exatamente como está:'
+    'Para confirmar, digite o nome da empresa exatamente como está:'
   );
   if (digitado === null) return;
   if (digitado.trim() !== String(b.nome).trim()) { msg($('lMsg2'), 'Nome diferente. Nada foi apagado.'); return; }
@@ -363,7 +363,7 @@ async function excluir(b) {
 
 // Edição simples por caixas de diálogo
 async function editar(b) {
-  const nome = prompt('Nome da barbearia:', b.nome);
+  const nome = prompt('Nome da Empresa:', b.nome);
   if (nome === null) return;
   const venc = prompt('Vencimento (AAAA-MM-DD):', b.vencimento);
   if (venc === null) return;
