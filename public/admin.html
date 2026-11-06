@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Administração — Barbearias</title>
+<title>Painel Administração</title>
 <link rel="icon" type="image/png" href="https://marketplace.canva.com/juAHY/MAGfkPjuAHY/1/tl/canva-%C3%ADcone-de-calend%C3%A1rio-e-rel%C3%B3gio-MAGfkPjuAHY.png">
 <style>
   :root {
@@ -148,6 +148,9 @@
     .stats { grid-template-columns:1fr; }
     .header-in { padding:12px; }
   }
+  .logo-up { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .logo-up img { width:44px; height:44px; object-fit:contain; border-radius:8px; border:1px solid var(--bd); background:var(--input); }
+  .logo-mini { width:28px; height:28px; object-fit:contain; border-radius:6px; vertical-align:middle; margin-right:8px; border:1px solid var(--bd); }
 </style>
 </head>
 <body>
@@ -170,7 +173,7 @@
       <div class="header-in topo">
         <div class="brand">
           <div class="brand-ico">✂️</div>
-          <div><h1>Barbearias</h1><small>Painel de administração</small></div>
+          <div><h1>Painel</h1><small>Painel de administração</small></div>
         </div>
         <button class="sec" id="btnSair">Sair</button>
       </div>
@@ -189,7 +192,16 @@
           <div><label for="cNome">Nome da barbearia</label><input id="cNome" maxlength="80"></div>
           <div><label for="cEmail">E-mail de login</label><input id="cEmail" type="email"></div>
           <div><label for="cSenha">Senha (mín. 6)</label><input id="cSenha" type="text" autocomplete="off"></div>
-          <div><label for="cLogo">Link do logo (https, opcional)</label><input id="cLogo" type="url" placeholder="https://..."></div>
+          <div>
+            <label>Logo (opcional)</label>
+            <div class="logo-up">
+              <img id="cLogoPrev" class="oculto" alt="">
+              <button type="button" class="sec" id="btnLogo">🖼️ Escolher da galeria</button>
+              <button type="button" class="sec pequeno oculto" id="btnLogoX">Remover</button>
+            </div>
+            <input id="cLogo" type="hidden">
+            <input id="cLogoFile" type="file" accept="image/*" class="oculto">
+          </div>
           <div><label for="cDias">Dias de teste</label><input id="cDias" type="number" min="0" max="365" value="7"></div>
         </div>
         <div style="margin-top:18px"><button id="btnCadastrar">Cadastrar</button></div>
@@ -287,11 +299,12 @@ async function carregar() {
     const vencida = !b.vencimento || b.vencimento < h;
     const link = b.slug ? location.origin + '/agenda.html?b=' + b.slug : '';
     return `<tr data-id="${esc(b.id)}">
-      <td><strong>${esc(b.nome)}</strong></td>
+      <td>${b.logo ? `<img class="logo-mini" src="${esc(b.logo)}" alt="">` : ''}<strong>${esc(b.nome)}</strong></td>
       <td>${esc(b.email)}</td>
       <td><span class="badge ${vencida ? 'venc-x' : 'venc-ok'}">${vencida ? 'Vencida' : 'Em dia'}</span><span class="data">${esc(dataBR(b.vencimento))}</span></td>
       <td>${link ? `<button class="sec pequeno copiar" data-link="${esc(link)}">Copiar</button>` : '<span class="mut">sem slug</span>'}</td>
       <td class="acoes">
+        <button class="pequeno sec trocarlogo">Logo</button>
         <button class="pequeno pri editar">Editar</button>
         <button class="pequeno sec excluir" style="color:var(--err)">Excluir</button>
       </td>
@@ -309,6 +322,19 @@ async function carregar() {
     btn.onclick = () => {
       const id = btn.closest('tr').dataset.id;
       editar(barbearias.find((x) => x.id === id));
+    };
+  });
+  tb.querySelectorAll('.trocarlogo').forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.closest('tr').dataset.id;
+      const b = barbearias.find((x) => x.id === id);
+      const img = await escolherImagem();
+      if (!img) return;
+      try {
+        await chamar('POST', { acao: 'atualizar', id: b.id, nome: b.nome, logo: img, vencimento: b.vencimento });
+        msg($('lMsg2'), 'Logo de "' + b.nome + '" atualizado.', true);
+        await carregar();
+      } catch (e) { msg($('lMsg2'), e.message); }
     };
   });
   tb.querySelectorAll('.excluir').forEach((btn) => {
@@ -339,13 +365,11 @@ async function excluir(b) {
 async function editar(b) {
   const nome = prompt('Nome da barbearia:', b.nome);
   if (nome === null) return;
-  const logo = prompt('Link do logo (https, deixe vazio para nenhum):', b.logo);
-  if (logo === null) return;
   const venc = prompt('Vencimento (AAAA-MM-DD):', b.vencimento);
   if (venc === null) return;
   const senha = prompt('Nova senha de login (deixe vazio para não mudar):', '');
   if (senha === null) return;
-  const corpo = { acao: 'atualizar', id: b.id, nome, logo, vencimento: venc };
+  const corpo = { acao: 'atualizar', id: b.id, nome, logo: b.logo || '', vencimento: venc };
   if (senha) corpo.senha = senha;
   try {
     await chamar('POST', corpo);
@@ -353,6 +377,51 @@ async function editar(b) {
     await carregar();
   } catch (e) { msg($('lMsg2'), e.message); }
 }
+
+// ---------- logo pela galeria ----------
+// Redimensiona (máx. 320px) e devolve a imagem como data URL
+function lerImagem(arquivo) {
+  return new Promise((resolve, reject) => {
+    if (!arquivo || !arquivo.type.startsWith('image/')) return reject(new Error('Escolha um arquivo de imagem.'));
+    const url = URL.createObjectURL(arquivo);
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 320 / Math.max(im.width, im.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/webp', 0.85));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Não consegui ler essa imagem.')); };
+    im.src = url;
+  });
+}
+function escolherImagem() {
+  return new Promise((resolve) => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = async () => {
+      try { resolve(await lerImagem(inp.files[0])); }
+      catch (e) { msg($('lMsg2'), e.message); resolve(null); }
+    };
+    inp.click();
+  });
+}
+function mostrarLogoCadastro(src) {
+  $('cLogo').value = src || '';
+  $('cLogoPrev').src = src || '';
+  $('cLogoPrev').classList.toggle('oculto', !src);
+  $('btnLogoX').classList.toggle('oculto', !src);
+  $('btnLogo').textContent = src ? '🖼️ Trocar imagem' : '🖼️ Escolher da galeria';
+}
+$('btnLogo').onclick = () => $('cLogoFile').click();
+$('cLogoFile').onchange = async () => {
+  try { mostrarLogoCadastro(await lerImagem($('cLogoFile').files[0])); }
+  catch (e) { msg($('cMsg'), e.message); }
+  $('cLogoFile').value = '';
+};
+$('btnLogoX').onclick = () => mostrarLogoCadastro('');
 
 // ---------- cadastro ----------
 $('btnCadastrar').onclick = async () => {
@@ -367,7 +436,8 @@ $('btnCadastrar').onclick = async () => {
       dias: $('cDias').value
     });
     msg($('cMsg'), 'Cadastrada! Vencimento: ' + r.vencimento + ' — Link de agendamento: ' + r.link, true);
-    ['cNome', 'cEmail', 'cSenha', 'cLogo'].forEach((i) => ($(i).value = ''));
+    ['cNome', 'cEmail', 'cSenha'].forEach((i) => ($(i).value = ''));
+    mostrarLogoCadastro('');
     $('cDias').value = 7;
     await carregar();
   } catch (e) { msg($('cMsg'), e.message); }
